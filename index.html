@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Zeiterfassung — Gebäudereinigung</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
+
+        .header { background: #1a56db; color: white; padding: 14px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .header-icon { font-size: 24px; }
+        .header-title { font-size: 17px; font-weight: 700; }
+        .header-sub { font-size: 11px; opacity: 0.75; margin-top: 1px; }
+
+        .tab-nav { background: white; display: flex; border-bottom: 2px solid #e2e8f0; position: sticky; top: 54px; z-index: 99; }
+        .tab-btn { flex: 1; padding: 13px 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.15s, border-color 0.15s; }
+        .tab-btn.active { color: #1a56db; border-bottom-color: #1a56db; }
+
+        .view { display: none; padding: 16px 24px; margin: 0 auto; }
+        .view.active { display: block; }
+        #view-form { max-width: 620px; }
+        #view-dashboard { max-width: 1200px; }
+
+        .card { background: white; border-radius: 12px; padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card-title { font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; }
+
+        .form-group { margin-bottom: 14px; }
+        .form-group:last-child { margin-bottom: 0; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 5px; }
+        label .req { color: #e53e3e; }
+
+        input, select, textarea { width: 100%; padding: 11px 13px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 16px; color: #1a202c; background: white; transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none; appearance: none; }
+        select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 36px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #1a56db; box-shadow: 0 0 0 3px rgba(26,86,219,0.12); }
+        textarea { resize: vertical; min-height: 80px; font-size: 15px; }
+
+        .toggle-group { display: flex; gap: 8px; }
+        .toggle-btn { flex: 1; padding: 11px 8px; border: 1.5px solid #e2e8f0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; text-align: center; transition: all 0.15s; }
+        .toggle-btn.active { background: #ebf4ff; border-color: #1a56db; color: #1a56db; }
+
+        .time-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: end; }
+        .duration-display { background: #f0f7ff; border: 1.5px solid #bee3f8; border-radius: 8px; padding: 11px 8px; font-size: 15px; font-weight: 700; color: #1a56db; text-align: center; }
+
+        .btn-primary { width: 100%; padding: 15px; background: #1a56db; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
+        .btn-primary:hover { background: #1648c0; }
+        .btn-secondary { padding: 8px 16px; background: white; color: #1a56db; border: 1.5px solid #1a56db; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+        .btn-secondary:hover { background: #ebf4ff; }
+        .btn-danger-sm { padding: 3px 8px; background: none; color: #e53e3e; border: 1px solid #fed7d7; border-radius: 5px; font-size: 11px; cursor: pointer; }
+        .btn-danger-sm:hover { background: #fff5f5; }
+        .btn-rapport-sm { padding: 3px 8px; background: none; color: #1a56db; border: 1px solid #bee3f8; border-radius: 5px; font-size: 11px; cursor: pointer; margin-right: 3px; }
+        .btn-rapport-sm:hover { background: #ebf4ff; }
+
+        .success-msg { background: #f0fff4; border: 1.5px solid #68d391; border-radius: 10px; padding: 14px; text-align: center; color: #276749; font-weight: 600; font-size: 14px; display: none; margin-top: 10px; }
+        .info-box { background: #ebf8ff; border-left: 4px solid #1a56db; border-radius: 6px; padding: 11px 14px; font-size: 13px; color: #2c5282; margin-bottom: 14px; line-height: 1.5; }
+        .demo-box { background: #fffbeb; border-left: 4px solid #f6ad55; border-radius: 6px; padding: 11px 14px; font-size: 12px; color: #744210; margin-bottom: 14px; line-height: 1.5; }
+
+        .edit-indicator { background: #fffbeb; border: 1.5px solid #f6ad55; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #744210; font-weight: 600; margin-bottom: 14px; display: none; justify-content: space-between; align-items: center; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+        .stat-card { background: white; border-radius: 12px; padding: 14px 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; }
+        .stat-value { font-size: 24px; font-weight: 800; color: #1a56db; }
+        .stat-label { font-size: 11px; color: #718096; margin-top: 3px; }
+
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .filter-grid .full { grid-column: 1 / -1; }
+
+        .table-wrapper { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #f7fafc; padding: 9px 11px; text-align: left; font-weight: 700; font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        td { padding: 9px 11px; border-bottom: 1px solid #f0f4f8; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f7fafc; }
+        .cell-truncate { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cell-nowrap { white-space: nowrap; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-ma { background: #ebf4ff; color: #1a56db; }
+        .badge-sub { background: #fef3c7; color: #92400e; }
+        .hours-bold { font-weight: 700; color: #1a56db; }
+        .note-text { color: #718096; font-size: 11px; font-style: italic; }
+        .no-data { text-align: center; color: #a0aec0; padding: 30px; font-size: 13px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .totals-row td { font-weight: 700; background: #f7fafc; border-top: 2px solid #e2e8f0; }
+
+        /* Meine Einträge */
+        .my-entries-section { display: none; margin-top: 6px; }
+        .my-entry-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f4f8; }
+        .my-entry-item:last-child { border-bottom: none; }
+        .my-entry-info { flex: 1; min-width: 0; }
+        .my-entry-main { font-size: 13px; font-weight: 600; color: #1a202c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .my-entry-sub { font-size: 12px; color: #718096; margin-top: 2px; }
+        .my-entry-actions { display: flex; gap: 5px; flex-shrink: 0; }
+
+        /* Kundenverwaltung */
+        .kunden-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f4f8; font-size: 14px; }
+        .kunden-item:last-child { border-bottom: none; }
+        .kunden-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+        .kunden-add-row input { flex: 1; font-size: 14px; padding: 8px 11px; width: auto; }
+
+        /* Rapportzettel Overlay */
+        #rapport-overlay { display: none; position: fixed; inset: 0; background: white; z-index: 200; overflow-y: auto; }
+        .rapport-controls { display: flex; gap: 10px; padding: 12px 20px; background: #f7fafc; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 10; }
+        .rapport-page { max-width: 600px; margin: 24px auto; padding: 30px 36px; font-family: Arial, Helvetica, sans-serif; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .rapport-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+        .rapport-company-name { font-size: 20px; font-weight: 800; color: #1a202c; }
+        .rapport-doc-title { font-size: 12px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+        .rapport-logo { font-size: 36px; }
+        .rapport-divider { border: none; border-top: 2px solid #1a56db; margin: 16px 0; }
+        .rapport-table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+        .rapport-table tr td { padding: 7px 8px; }
+        .rapport-table tr:nth-child(odd) { background: #f7fafc; }
+        .rapport-key { font-size: 12px; color: #718096; font-weight: 600; width: 140px; }
+        .rapport-val { font-size: 14px; color: #1a202c; }
+        .rapport-notice { font-size: 12px; color: #4a5568; font-style: italic; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin: 20px 0; }
+        .rapport-sigs { display: flex; gap: 30px; margin-top: 30px; }
+        .rapport-sig { flex: 1; }
+        .rapport-sig-line { border-bottom: 1.5px solid #1a202c; height: 48px; margin-bottom: 6px; }
+        .rapport-sig-label { font-size: 11px; color: #718096; }
+
+        /* Unterschrift-Pad */
+        #sig-overlay { display: none; position: fixed; inset: 0; background: #1a202c; z-index: 300; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 14px; }
+        #sig-title { color: white; font-size: 17px; font-weight: 700; }
+        #sig-hint { color: #a0aec0; font-size: 13px; }
+        #sig-canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; display: block; }
+        #sig-actions { display: flex; gap: 12px; }
+        .btn-sign { width: 100%; padding: 9px; background: #ebf4ff; color: #1a56db; border: 1.5px dashed #1a56db; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 6px; }
+        .btn-sign:hover { background: #bee3f8; }
+        .sig-captured { max-width: 100%; height: 52px; object-fit: contain; object-position: left bottom; display: block; }
+        .sig-ok { font-size: 11px; color: #38a169; margin-top: 3px; }
+
+        @media print {
+            body > *:not(#rapport-overlay) { display: none !important; }
+            #rapport-overlay { display: block !important; position: static !important; overflow: visible !important; }
+            .rapport-controls { display: none !important; }
+            .rapport-page { border: none; box-shadow: none; margin: 0; padding: 20px; max-width: 100%; }
+            .btn-sign { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Unterschrift-Pad -->
+<div id="sig-overlay">
+    <div id="sig-title">Unterschrift des Kunden</div>
+    <div id="sig-hint">Bitte mit dem Finger oder Stift unterschreiben</div>
+    <canvas id="sig-canvas"></canvas>
+    <div id="sig-actions">
+        <button class="btn-secondary" style="background:transparent;color:white;border-color:#4a5568" onclick="clearSig()">Löschen</button>
+        <button class="btn-primary" style="width:auto;padding:12px 28px" onclick="confirmSig()">✓ Unterschrift übernehmen</button>
+    </div>
+    <button style="background:none;border:none;color:#718096;cursor:pointer;font-size:13px" onclick="cancelSig()">Abbrechen</button>
+</div>
+
+<!-- Rapportzettel Overlay -->
+<div id="rapport-overlay">
+    <div class="rapport-controls">
+        <button class="btn-secondary" onclick="closeRapport()">✕ Schließen</button>
+        <button class="btn-primary" style="width:auto;padding:10px 24px" onclick="window.print()">🖨 Drucken / PDF speichern</button>
+    </div>
+    <div id="rapport-content"></div>
+</div>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-icon">⏱</div>
+    <div>
+        <div class="header-title">Zeiterfassung</div>
+        <div class="header-sub" id="header-sub">Gebäudereinigung — Demo</div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="tab-nav" id="tab-nav">
+    <button class="tab-btn active" id="tab-form" onclick="showTab('form', this)">📋 Eintrag erfassen</button>
+    <button class="tab-btn" id="tab-dashboard" onclick="showTab('dashboard', this)">📊 Büro-Übersicht</button>
+</div>
+
+
+<!-- MITARBEITER-FORMULAR -->
+<div id="view-form" class="view active">
+
+    <div class="demo-box">
+        ⚠️ <strong>Demo-Version</strong> — Mitarbeiter-Ansicht.<br>
+        Büro-Ansicht öffnen: Dateiname + <code>?buero</code> in die Adresszeile
+    </div>
+
+    <div class="info-box">
+        Trag hier deine Arbeitszeit ein. Die Dauer wird automatisch berechnet.
+    </div>
+
+    <div class="edit-indicator" id="edit-indicator">
+        <span id="edit-indicator-text">✏ Bearbeitung läuft</span>
+        <button class="btn-danger-sm" onclick="cancelEdit()">Abbrechen</button>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Wer bist du?</div>
+        <div class="form-group">
+            <label>Name <span class="req">*</span></label>
+            <select id="f-name" onchange="onNameChange()">
+                <option value="">— Name auswählen —</option>
+                <optgroup label="Mitarbeiter">
+                    <option>Max Müller</option>
+                    <option>Anna Schmidt</option>
+                    <option>Klaus Weber</option>
+                    <option>Petra Fischer</option>
+                </optgroup>
+                <optgroup label="Subunternehmer">
+                    <option>Reinigungsservice Nord GmbH</option>
+                    <option>Putzprofi Meier</option>
+                </optgroup>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Typ <span class="req">*</span></label>
+            <div class="toggle-group">
+                <button class="toggle-btn active" id="toggle-ma" onclick="setType('Mitarbeiter', this)">👤 Mitarbeiter</button>
+                <button class="toggle-btn" id="toggle-sub" onclick="setType('Subunternehmer', this)">🏢 Subunternehmer</button>
+            </div>
+            <input type="hidden" id="f-type" value="Mitarbeiter">
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Bei welchem Kunden?</div>
+        <div class="form-group">
+            <label>Kunde / Objekt <span class="req">*</span></label>
+            <div style="display:flex;gap:8px">
+                <select id="f-customer" style="flex:1">
+                    <option value="">— Kunde auswählen —</option>
+                </select>
+                <button type="button" class="btn-secondary" style="white-space:nowrap;flex-shrink:0" onclick="quickAddCustomer()">+ Neu</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Wann warst du dort?</div>
+        <div class="form-group">
+            <label>Datum <span class="req">*</span></label>
+            <input type="date" id="f-date">
+        </div>
+        <div class="form-group">
+            <div class="time-row">
+                <div>
+                    <label>Von <span class="req">*</span></label>
+                    <input type="time" id="f-from" oninput="calcDuration()">
+                </div>
+                <div>
+                    <label>Bis <span class="req">*</span></label>
+                    <input type="time" id="f-to" oninput="calcDuration()">
+                </div>
+                <div>
+                    <label>Dauer</label>
+                    <div class="duration-display" id="duration-display">—</div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Bemerkung (optional)</label>
+            <textarea id="f-note" placeholder="z.B. Starke Verschmutzung Eingangsbereich, Sonderreinigung WC 2. OG…"></textarea>
+        </div>
+    </div>
+
+    <button class="btn-primary" id="submit-btn" onclick="submitEntry()">✓ Eintrag speichern</button>
+
+    <div class="success-msg" id="success-msg"></div>
+
+    <div class="card my-entries-section" id="my-entries-section">
+        <div class="card-title">Meine letzten Einträge</div>
+        <div id="my-entries-list"></div>
+    </div>
+
+    <br>
+</div>
+
+
+<!-- BÜRO-DASHBOARD -->
+<div id="view-dashboard" class="view">
+
+    <div class="demo-box">
+        ⚠️ <strong>Demo-Version</strong> — Büro-Ansicht.<br>
+        Mitarbeiter-Ansicht: URL ohne <code>?buero</code> öffnen.
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="stat-hours">—</div>
+            <div class="stat-label">Std. diesen Monat</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-entries">—</div>
+            <div class="stat-label">Einträge diesen Monat</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-customers">—</div>
+            <div class="stat-label">aktive Kunden</div>
+        </div>
+    </div>
+
+    <!-- Kundenverwaltung -->
+    <div class="card">
+        <div class="section-header" onclick="toggleKunden()" style="cursor:pointer;user-select:none">
+            <div class="card-title" style="margin:0">👥 Kunden verwalten</div>
+            <span id="kunden-toggle-icon" style="font-size:12px;color:#718096">▶ Ausklappen</span>
+        </div>
+        <div id="kunden-body" style="display:none;margin-top:12px">
+            <div class="kunden-add-row">
+                <input type="text" id="new-customer-input" placeholder="Neuer Kundenname…" onkeydown="if(event.key==='Enter')addCustomerFromUI()">
+                <button class="btn-secondary" onclick="addCustomerFromUI()">+ Hinzufügen</button>
+            </div>
+            <div id="customer-list-container"></div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="card">
+        <div class="card-title">Filter & Suche</div>
+        <div class="filter-grid">
+            <div>
+                <label>Kunde</label>
+                <select id="filter-customer" onchange="renderDashboard()"><option value="">Alle Kunden</option></select>
+            </div>
+            <div>
+                <label>Monat</label>
+                <select id="filter-month" onchange="onMonthChange()"><option value="">Alle Monate</option></select>
+            </div>
+            <div>
+                <label>Typ</label>
+                <select id="filter-type" onchange="renderDashboard()">
+                    <option value="">Alle</option>
+                    <option>Mitarbeiter</option>
+                    <option>Subunternehmer</option>
+                </select>
+            </div>
+            <div></div>
+            <div>
+                <label>Von Datum</label>
+                <input type="date" id="filter-from" onchange="onDateChange()">
+            </div>
+            <div>
+                <label>Bis Datum</label>
+                <input type="date" id="filter-to" onchange="onDateChange()">
+            </div>
+            <div class="full" style="display:flex;gap:8px;align-items:flex-end;margin-top:4px;">
+                <button class="btn-secondary" onclick="resetFilters()">✕ Filter zurücksetzen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stunden pro Kunde -->
+    <div class="card">
+        <div class="section-header">
+            <div class="card-title" style="margin:0">Stunden pro Kunde</div>
+            <button class="btn-secondary" onclick="exportCSV()">⬇ CSV Export</button>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Kunde</th><th>Einsätze</th><th>Gesamt-Std.</th><th>MA-Std.</th><th>Sub-Std.</th></tr>
+                </thead>
+                <tbody id="summary-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Alle Einträge -->
+    <div class="card">
+        <div class="section-header">
+            <div class="card-title" style="margin:0">Alle Einträge</div>
+            <span id="entry-count" style="font-size:12px;color:#718096"></span>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Datum</th><th>Name</th><th>Typ</th><th>Kunde</th><th>Von</th><th>Bis</th><th>Std.</th><th>Bemerkung</th><th></th></tr>
+                </thead>
+                <tbody id="entries-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <br>
+</div>
+
+
+<script>
+// ── DATENSCHICHT ──────────────────────────────────────────
+
+function loadData() {
+    const raw = localStorage.getItem('zf_entries_v1');
+    return raw ? JSON.parse(raw) : [];
+}
+function saveData(entries) {
+    localStorage.setItem('zf_entries_v1', JSON.stringify(entries));
+}
+
+function loadCustomers() {
+    const raw = localStorage.getItem('zf_customers_v1');
+    if (raw) return JSON.parse(raw);
+    const defaults = ['Hotel Zentrum Berlin','Bürogebäude Mitte GmbH','Einkaufszentrum West','Arztpraxis Dr. Meier','Schule Am Sonnenstein','Rathaus Hauptstraße'];
+    saveCustomers(defaults);
+    return defaults;
+}
+function saveCustomers(list) {
+    localStorage.setItem('zf_customers_v1', JSON.stringify(list));
+}
+function addCustomer(name) {
+    const list = loadCustomers();
+    if (list.find(c => c.toLowerCase() === name.toLowerCase())) return false;
+    list.push(name);
+    list.sort((a, b) => a.localeCompare(b, 'de'));
+    saveCustomers(list);
+    return true;
+}
+function removeCustomer(name) {
+    saveCustomers(loadCustomers().filter(c => c !== name));
+}
+
+function initSampleData() {
+    if (loadData().length > 0) return;
+    saveData([
+        { id: 1, name: 'Max Müller',                  type: 'Mitarbeiter',    customer: 'Hotel Zentrum Berlin',    date: '2026-05-15', from: '07:00', to: '13:00', hours: 6.0,  note: '' },
+        { id: 2, name: 'Anna Schmidt',                type: 'Mitarbeiter',    customer: 'Bürogebäude Mitte GmbH',  date: '2026-05-15', from: '08:00', to: '12:30', hours: 4.5,  note: 'Treppenhaus stark verschmutzt' },
+        { id: 3, name: 'Reinigungsservice Nord GmbH', type: 'Subunternehmer', customer: 'Einkaufszentrum West',    date: '2026-05-16', from: '06:00', to: '10:00', hours: 4.0,  note: '' },
+        { id: 4, name: 'Klaus Weber',                 type: 'Mitarbeiter',    customer: 'Hotel Zentrum Berlin',    date: '2026-05-16', from: '07:00', to: '14:00', hours: 7.0,  note: 'Sonderreinigung nach Veranstaltung' },
+        { id: 5, name: 'Petra Fischer',               type: 'Mitarbeiter',    customer: 'Arztpraxis Dr. Meier',    date: '2026-05-17', from: '17:00', to: '19:30', hours: 2.5,  note: '' },
+        { id: 6, name: 'Putzprofi Meier',             type: 'Subunternehmer', customer: 'Schule Am Sonnenstein',   date: '2026-05-17', from: '14:00', to: '18:00', hours: 4.0,  note: 'Turnhalle + alle Flure' },
+        { id: 7, name: 'Max Müller',                  type: 'Mitarbeiter',    customer: 'Bürogebäude Mitte GmbH',  date: '2026-05-19', from: '07:30', to: '11:30', hours: 4.0,  note: '' },
+        { id: 8, name: 'Anna Schmidt',                type: 'Mitarbeiter',    customer: 'Hotel Zentrum Berlin',    date: '2026-05-19', from: '08:00', to: '13:00', hours: 5.0,  note: '' },
+        { id: 9, name: 'Klaus Weber',                 type: 'Mitarbeiter',    customer: 'Rathaus Hauptstraße',     date: '2026-05-19', from: '06:00', to: '09:30', hours: 3.5,  note: 'Fenster Erdgeschoss gereinigt' },
+    ]);
+}
+
+// ── FORMULAR ─────────────────────────────────────────────
+
+let editingId = null;
+
+function populateFormCustomers() {
+    const sel = document.getElementById('f-customer');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Kunde auswählen —</option>';
+    loadCustomers().forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+}
+
+function quickAddCustomer() {
+    const name = prompt('Name des neuen Kunden:');
+    if (!name || !name.trim()) return;
+    if (!addCustomer(name.trim())) { alert('Dieser Kunde ist bereits vorhanden.'); return; }
+    populateFormCustomers();
+    document.getElementById('f-customer').value = name.trim();
+    if (document.getElementById('kunden-body').style.display !== 'none') renderCustomerList();
+}
+
+function setType(type, btn) {
+    document.getElementById('f-type').value = type;
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function setTypeByValue(type) {
+    document.getElementById('f-type').value = type;
+    document.getElementById('toggle-ma').classList.toggle('active', type === 'Mitarbeiter');
+    document.getElementById('toggle-sub').classList.toggle('active', type === 'Subunternehmer');
+}
+
+function calcDuration() {
+    const from = document.getElementById('f-from').value;
+    const to   = document.getElementById('f-to').value;
+    const disp = document.getElementById('duration-display');
+    if (!from || !to) { disp.textContent = '—'; disp.style.color = '#1a56db'; return; }
+    const mins = toMins(to) - toMins(from);
+    if (mins <= 0) { disp.textContent = 'Fehler'; disp.style.color = '#e53e3e'; return; }
+    disp.style.color = '#1a56db';
+    const h = Math.floor(mins / 60), m = mins % 60;
+    disp.textContent = m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function toMins(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+}
+
+function onNameChange() {
+    if (editingId) cancelEdit();
+    renderMyEntries(document.getElementById('f-name').value);
+}
+
+function submitEntry() {
+    const name     = document.getElementById('f-name').value.trim();
+    const type     = document.getElementById('f-type').value;
+    const customer = document.getElementById('f-customer').value;
+    const date     = document.getElementById('f-date').value;
+    const from     = document.getElementById('f-from').value;
+    const to       = document.getElementById('f-to').value;
+    const note     = document.getElementById('f-note').value.trim();
+
+    if (!name || !customer || !date || !from || !to) {
+        alert('Bitte alle Pflichtfelder (*) ausfüllen.');
+        return;
+    }
+    const mins = toMins(to) - toMins(from);
+    if (mins <= 0) { alert('"Bis"-Zeit muss nach "Von"-Zeit liegen.'); return; }
+
+    const hours   = Math.round(mins / 60 * 100) / 100;
+    const entries = loadData();
+    let savedId;
+
+    if (editingId) {
+        const idx = entries.findIndex(e => e.id === editingId);
+        if (idx !== -1) entries[idx] = { ...entries[idx], name, type, customer, date, from, to, hours, note };
+        savedId   = editingId;
+        editingId = null;
+        document.getElementById('edit-indicator').style.display = 'none';
+        document.getElementById('submit-btn').textContent = '✓ Eintrag speichern';
+    } else {
+        savedId = Date.now();
+        entries.push({ id: savedId, name, type, customer, date, from, to, hours, note });
+    }
+    saveData(entries);
+
+    ['f-customer','f-from','f-to','f-note'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('duration-display').textContent = '—';
+
+    const msg = document.getElementById('success-msg');
+    msg.innerHTML = `✅ Eintrag gespeichert und im Büro sichtbar!<br>
+        <button class="btn-secondary" style="margin-top:10px;font-size:12px" onclick="showRapport(${savedId})">📋 Rapportzettel anzeigen / drucken</button>`;
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 6000);
+
+    renderMyEntries(name);
+}
+
+// ── MEINE EINTRÄGE ────────────────────────────────────────
+
+function renderMyEntries(name) {
+    const sec = document.getElementById('my-entries-section');
+    if (!name) { sec.style.display = 'none'; return; }
+
+    const entries = loadData()
+        .filter(e => e.name === name)
+        .sort((a, b) => b.date.localeCompare(a.date) || b.from.localeCompare(a.from))
+        .slice(0, 3);
+
+    if (entries.length === 0) { sec.style.display = 'none'; return; }
+
+    sec.style.display = 'block';
+    document.getElementById('my-entries-list').innerHTML = entries.map(e => `
+        <div class="my-entry-item">
+            <div class="my-entry-info">
+                <div class="my-entry-main">${fmtDate(e.date)} — ${e.customer}</div>
+                <div class="my-entry-sub">${e.from}–${e.to} Uhr &nbsp;·&nbsp; ${e.hours.toFixed(1)} Std.${e.note ? ' &nbsp;·&nbsp; ' + e.note : ''}</div>
+            </div>
+            <div class="my-entry-actions">
+                <button class="btn-secondary" style="padding:4px 10px;font-size:11px" onclick="startEdit(${e.id})">✏</button>
+                <button class="btn-rapport-sm" onclick="showRapport(${e.id})">📋</button>
+                <button class="btn-danger-sm" onclick="deleteMyEntry(${e.id})">✕</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function startEdit(id) {
+    const entry = loadData().find(e => e.id === id);
+    if (!entry) return;
+    editingId = id;
+    document.getElementById('f-name').value     = entry.name;
+    document.getElementById('f-customer').value = entry.customer;
+    document.getElementById('f-date').value     = entry.date;
+    document.getElementById('f-from').value     = entry.from;
+    document.getElementById('f-to').value       = entry.to;
+    document.getElementById('f-note').value     = entry.note || '';
+    setTypeByValue(entry.type);
+    calcDuration();
+    document.getElementById('edit-indicator-text').textContent = `✏ Bearbeitung: ${fmtDate(entry.date)} — ${entry.customer}`;
+    document.getElementById('edit-indicator').style.display = 'flex';
+    document.getElementById('submit-btn').textContent = '✓ Änderung speichern';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEdit() {
+    editingId = null;
+    document.getElementById('edit-indicator').style.display = 'none';
+    document.getElementById('submit-btn').textContent = '✓ Eintrag speichern';
+    ['f-customer','f-from','f-to','f-note'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('duration-display').textContent = '—';
+}
+
+function deleteMyEntry(id) {
+    if (!confirm('Diesen Eintrag löschen?')) return;
+    if (editingId === id) cancelEdit();
+    saveData(loadData().filter(e => e.id !== id));
+    renderMyEntries(document.getElementById('f-name').value);
+}
+
+// ── RAPPORTZETTEL ─────────────────────────────────────────
+
+function showRapport(id) {
+    const entry = loadData().find(e => e.id === id);
+    if (!entry) return;
+
+    document.getElementById('rapport-content').innerHTML = `
+        <div class="rapport-page">
+            <div class="rapport-top">
+                <div>
+                    <div class="rapport-company-name">Gebäudereinigung</div>
+                    <div class="rapport-doc-title">Arbeitsnachweis / Rapportzettel</div>
+                </div>
+                <div class="rapport-logo">🧹</div>
+            </div>
+            <hr class="rapport-divider">
+            <table class="rapport-table">
+                <tr><td class="rapport-key">Kunde / Objekt:</td><td class="rapport-val"><strong>${entry.customer}</strong></td></tr>
+                <tr><td class="rapport-key">Datum:</td><td class="rapport-val"><strong>${fmtDate(entry.date)}</strong></td></tr>
+                <tr><td class="rapport-key">Ausgeführt von:</td><td class="rapport-val">${entry.name}</td></tr>
+                <tr><td class="rapport-key">Arbeitszeit:</td><td class="rapport-val">${entry.from} – ${entry.to} Uhr</td></tr>
+                <tr><td class="rapport-key">Dauer:</td><td class="rapport-val"><strong>${entry.hours.toFixed(1)} Stunden</strong></td></tr>
+                ${entry.note ? `<tr><td class="rapport-key">Bemerkung:</td><td class="rapport-val">${entry.note}</td></tr>` : ''}
+            </table>
+            <hr class="rapport-divider">
+            <div class="rapport-notice">
+                Hiermit wird bestätigt, dass die oben aufgeführten Reinigungsarbeiten
+                ordnungsgemäß und vollständig ausgeführt wurden.
+            </div>
+            <div class="rapport-sigs">
+                <div class="rapport-sig">
+                    <div id="sig-customer"><div class="rapport-sig-line"></div></div>
+                    <button class="btn-sign" onclick="openSig('customer')">✍ Kunde unterschreiben lassen</button>
+                    <div class="rapport-sig-label" style="margin-top:6px">Unterschrift Auftraggeber</div>
+                </div>
+                <div class="rapport-sig">
+                    <div id="sig-employee"><div class="rapport-sig-line"></div></div>
+                    <button class="btn-sign" onclick="openSig('employee')">✍ Reinigungskraft unterschreiben</button>
+                    <div class="rapport-sig-label" style="margin-top:6px">Unterschrift Reinigungskraft</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('rapport-overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRapport() {
+    document.getElementById('rapport-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// ── UNTERSCHRIFT-PAD ─────────────────────────────────────
+
+let sigTarget = null;
+
+function openSig(target) {
+    sigTarget = target;
+    const overlay = document.getElementById('sig-overlay');
+    const canvas  = document.getElementById('sig-canvas');
+    const maxW    = Math.min(window.innerWidth - 40, 560);
+    canvas.width  = maxW;
+    canvas.height = Math.round(maxW * 0.32);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#1a202c';
+    ctx.lineWidth   = 2.5;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    // Guideline
+    ctx.save();
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth   = 1;
+    ctx.setLineDash([4, 4]);
+    const y = canvas.height * 0.72;
+    ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(canvas.width - 20, y); ctx.stroke();
+    ctx.restore();
+    overlay.style.display = 'flex';
+}
+
+function clearSig() {
+    const canvas = document.getElementById('sig-canvas');
+    const ctx    = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth   = 1;
+    ctx.setLineDash([4, 4]);
+    const y = canvas.height * 0.72;
+    ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(canvas.width - 20, y); ctx.stroke();
+    ctx.strokeStyle = '#1a202c';
+    ctx.lineWidth   = 2.5;
+    ctx.setLineDash([]);
+}
+
+function cancelSig() {
+    document.getElementById('sig-overlay').style.display = 'none';
+    sigTarget = null;
+}
+
+function confirmSig() {
+    const canvas = document.getElementById('sig-canvas');
+    const data   = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+    if (!Array.from(data).some((v, i) => i % 4 === 3 && v > 0)) {
+        alert('Bitte zuerst unterschreiben.');
+        return;
+    }
+    const dataUrl = canvas.toDataURL('image/png');
+    const targetEl = document.getElementById(sigTarget === 'customer' ? 'sig-customer' : 'sig-employee');
+    if (targetEl) {
+        targetEl.innerHTML = `<img src="${dataUrl}" class="sig-captured"><div class="sig-ok">✓ Unterschrift erfasst</div>`;
+    }
+    document.getElementById('sig-overlay').style.display = 'none';
+    sigTarget = null;
+}
+
+function initSigCanvas() {
+    const canvas = document.getElementById('sig-canvas');
+    const ctx    = canvas.getContext('2d');
+    let drawing  = false;
+
+    function pos(e) {
+        const r = canvas.getBoundingClientRect();
+        const s = e.touches ? e.touches[0] : e;
+        return { x: s.clientX - r.left, y: s.clientY - r.top };
+    }
+    function start(e) {
+        e.preventDefault();
+        drawing = true;
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#1a202c';
+        ctx.lineWidth   = 2.5;
+        const { x, y } = pos(e);
+        ctx.beginPath(); ctx.moveTo(x, y);
+    }
+    function move(e) {
+        e.preventDefault();
+        if (!drawing) return;
+        const { x, y } = pos(e);
+        ctx.lineTo(x, y); ctx.stroke();
+    }
+    function stop() { drawing = false; }
+
+    canvas.addEventListener('touchstart',  start, { passive: false });
+    canvas.addEventListener('touchmove',   move,  { passive: false });
+    canvas.addEventListener('touchend',    stop);
+    canvas.addEventListener('mousedown',   start);
+    canvas.addEventListener('mousemove',   move);
+    canvas.addEventListener('mouseup',     stop);
+    canvas.addEventListener('mouseleave',  stop);
+}
+
+// ── KUNDENVERWALTUNG (Büro) ───────────────────────────────
+
+function toggleKunden() {
+    const body = document.getElementById('kunden-body');
+    const icon = document.getElementById('kunden-toggle-icon');
+    const open = body.style.display === 'none';
+    body.style.display = open ? 'block' : 'none';
+    icon.textContent   = open ? '▼ Einklappen' : '▶ Ausklappen';
+    if (open) renderCustomerList();
+}
+
+function renderCustomerList() {
+    const container = document.getElementById('customer-list-container');
+    const customers  = loadCustomers();
+    if (customers.length === 0) {
+        container.innerHTML = '<div class="no-data">Noch keine Kunden angelegt.</div>';
+        return;
+    }
+    container.innerHTML = customers.map(c => `
+        <div class="kunden-item">
+            <span>${c}</span>
+            <button class="btn-danger-sm" onclick="removeCustomerFromUI(${JSON.stringify(c)})">✕ Entfernen</button>
+        </div>
+    `).join('');
+}
+
+function addCustomerFromUI() {
+    const input = document.getElementById('new-customer-input');
+    const name  = input.value.trim();
+    if (!name) return;
+    if (!addCustomer(name)) { alert('Dieser Kunde ist bereits vorhanden.'); return; }
+    input.value = '';
+    renderCustomerList();
+    populateCustomerFilter();
+    populateFormCustomers();
+}
+
+function removeCustomerFromUI(name) {
+    if (!confirm(`Kunde "${name}" aus der Liste entfernen?`)) return;
+    removeCustomer(name);
+    renderCustomerList();
+    populateCustomerFilter();
+    populateFormCustomers();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────
+
+function getFilteredEntries() {
+    let entries = loadData();
+    const fc  = document.getElementById('filter-customer').value;
+    const ft  = document.getElementById('filter-type').value;
+    const ff  = document.getElementById('filter-from').value;
+    const ft2 = document.getElementById('filter-to').value;
+    if (fc)  entries = entries.filter(e => e.customer === fc);
+    if (ft)  entries = entries.filter(e => e.type === ft);
+    if (ff)  entries = entries.filter(e => e.date >= ff);
+    if (ft2) entries = entries.filter(e => e.date <= ft2);
+    return entries;
+}
+
+function renderDashboard() {
+    const entries  = getFilteredEntries();
+    const monthStr = new Date().toISOString().slice(0, 7);
+    const monthE   = entries.filter(e => e.date.startsWith(monthStr));
+    document.getElementById('stat-hours').textContent     = monthE.reduce((s,e)=>s+e.hours,0).toFixed(1) + 'h';
+    document.getElementById('stat-entries').textContent   = monthE.length;
+    document.getElementById('stat-customers').textContent = new Set(monthE.map(e=>e.customer)).size;
+
+    const byCustomer = {};
+    entries.forEach(e => {
+        if (!byCustomer[e.customer]) byCustomer[e.customer] = { count:0, hours:0, ma:0, sub:0 };
+        byCustomer[e.customer].count++;
+        byCustomer[e.customer].hours += e.hours;
+        if (e.type === 'Mitarbeiter') byCustomer[e.customer].ma  += e.hours;
+        else                          byCustomer[e.customer].sub += e.hours;
+    });
+    const sorted = Object.entries(byCustomer).sort((a,b)=>b[1].hours-a[1].hours);
+    const sumTb  = document.getElementById('summary-tbody');
+    if (sorted.length === 0) {
+        sumTb.innerHTML = '<tr><td colspan="5" class="no-data">Keine Daten für diesen Filter</td></tr>';
+    } else {
+        const totalAll = sorted.reduce((s,[,d])=>s+d.hours,0);
+        sumTb.innerHTML = sorted.map(([cust,d]) => `
+            <tr>
+                <td>${cust}</td><td>${d.count}</td>
+                <td class="hours-bold">${d.hours.toFixed(1)} Std.</td>
+                <td>${d.ma.toFixed(1)}</td><td>${d.sub.toFixed(1)}</td>
+            </tr>`).join('') + `
+            <tr class="totals-row">
+                <td>Gesamt</td><td>${entries.length}</td>
+                <td>${totalAll.toFixed(1)} Std.</td>
+                <td>${entries.filter(e=>e.type==='Mitarbeiter').reduce((s,e)=>s+e.hours,0).toFixed(1)}</td>
+                <td>${entries.filter(e=>e.type==='Subunternehmer').reduce((s,e)=>s+e.hours,0).toFixed(1)}</td>
+            </tr>`;
+    }
+
+    const sorted2 = [...entries].sort((a,b)=>b.date.localeCompare(a.date)||b.from.localeCompare(a.from));
+    document.getElementById('entry-count').textContent = `${entries.length} Einträge`;
+    const tbody = document.getElementById('entries-tbody');
+    if (sorted2.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="no-data">Keine Einträge gefunden</td></tr>';
+    } else {
+        tbody.innerHTML = sorted2.map(e => `
+            <tr>
+                <td class="cell-nowrap">${fmtDate(e.date)}</td>
+                <td class="cell-truncate" title="${e.name}">${e.name}</td>
+                <td class="cell-nowrap"><span class="badge badge-${e.type==='Mitarbeiter'?'ma':'sub'}">${e.type==='Mitarbeiter'?'MA':'Sub'}</span></td>
+                <td class="cell-truncate" title="${e.customer}">${e.customer}</td>
+                <td class="cell-nowrap">${e.from}</td><td class="cell-nowrap">${e.to}</td>
+                <td class="hours-bold cell-nowrap">${e.hours.toFixed(1)}</td>
+                <td class="note-text cell-truncate" title="${e.note||''}">${e.note||'—'}</td>
+                <td style="text-align:center;white-space:nowrap">
+                    <button class="btn-rapport-sm" onclick="showRapport(${e.id})">📋</button>
+                    <button class="btn-danger-sm" onclick="deleteEntry(${e.id})">✕</button>
+                </td>
+            </tr>`).join('');
+    }
+}
+
+function deleteEntry(id) {
+    if (!confirm('Diesen Eintrag löschen?')) return;
+    saveData(loadData().filter(e => e.id !== id));
+    renderDashboard();
+}
+
+function resetFilters() {
+    ['filter-customer','filter-month','filter-type','filter-from','filter-to'].forEach(id => document.getElementById(id).value = '');
+    renderDashboard();
+}
+
+function onMonthChange() {
+    const val = document.getElementById('filter-month').value;
+    if (val) {
+        const [y, m] = val.split('-');
+        const last   = new Date(parseInt(y), parseInt(m), 0).getDate();
+        document.getElementById('filter-from').value = `${y}-${m}-01`;
+        document.getElementById('filter-to').value   = `${y}-${m}-${String(last).padStart(2,'0')}`;
+    } else {
+        document.getElementById('filter-from').value = '';
+        document.getElementById('filter-to').value   = '';
+    }
+    renderDashboard();
+}
+
+function onDateChange() {
+    document.getElementById('filter-month').value = '';
+    renderDashboard();
+}
+
+const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+function populateCustomerFilter() {
+    const sel = document.getElementById('filter-customer');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Alle Kunden</option>';
+    const inList = loadCustomers();
+    const inData = [...new Set(loadData().map(e => e.customer))];
+    const all    = [...new Set([...inList, ...inData])].sort((a,b)=>a.localeCompare(b,'de'));
+    all.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+}
+
+function populateMonthFilter() {
+    const sel = document.getElementById('filter-month');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Alle Monate</option>';
+    [...new Set(loadData().map(e=>e.date.slice(0,7)))].sort().reverse().forEach(m => {
+        const [y,mo] = m.split('-');
+        const o = document.createElement('option');
+        o.value = m; o.textContent = `${MONTHS_DE[parseInt(mo)-1]} ${y}`;
+        sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+}
+
+function exportCSV() {
+    const entries = getFilteredEntries().sort((a,b)=>b.date.localeCompare(a.date));
+    const rows = [
+        ['Datum','Name','Typ','Kunde','Von','Bis','Stunden','Bemerkung'],
+        ...entries.map(e=>[e.date,e.name,e.type,e.customer,e.from,e.to,e.hours.toFixed(2).replace('.',','),e.note||''])
+    ];
+    const csv  = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+    const blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `zeiterfassung_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+}
+
+function fmtDate(s) {
+    const [y,m,d] = s.split('-');
+    return `${d}.${m}.${y}`;
+}
+
+// ── TABS ──────────────────────────────────────────────────
+
+function showTab(tab, btn) {
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('view-'+tab).classList.add('active');
+    btn.classList.add('active');
+    if (tab === 'dashboard') { populateCustomerFilter(); populateMonthFilter(); renderDashboard(); }
+    if (tab === 'form')      { populateFormCustomers(); }
+}
+
+// ── INIT ──────────────────────────────────────────────────
+
+document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
+initSampleData();
+populateFormCustomers();
+initSigCanvas();
+
+const isBuero = window.location.search.includes('buero');
+if (isBuero) {
+    document.getElementById('tab-nav').style.display   = 'none';
+    document.getElementById('view-form').classList.remove('active');
+    document.getElementById('view-dashboard').classList.add('active');
+    document.getElementById('header-sub').textContent  = 'Büro-Übersicht';
+    populateCustomerFilter(); populateMonthFilter(); renderDashboard();
+} else {
+    document.getElementById('tab-nav').style.display   = 'none';
+    document.getElementById('header-sub').textContent  = 'Zeiterfassung Mitarbeiter';
+}
+</script>
+</body>
+</html>
