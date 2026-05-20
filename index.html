@@ -8,58 +8,58 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f4f8; color: #1a202c; min-height: 100vh; }
 
-        .header { background: #1a56db; color: white; padding: 14px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .header { background: #16a34a; color: white; padding: 14px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .header-icon { font-size: 24px; }
         .header-title { font-size: 17px; font-weight: 700; }
         .header-sub { font-size: 11px; opacity: 0.75; margin-top: 1px; }
 
         .tab-nav { background: white; display: flex; border-bottom: 2px solid #e2e8f0; position: sticky; top: 54px; z-index: 99; }
         .tab-btn { flex: 1; padding: 13px 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.15s, border-color 0.15s; }
-        .tab-btn.active { color: #1a56db; border-bottom-color: #1a56db; }
+        .tab-btn.active { color: #16a34a; border-bottom-color: #16a34a; }
 
-        .view { display: none; padding: 16px 24px; margin: 0 auto; }
+        .view { display: none; padding: 12px 24px; margin: 0 auto; }
         .view.active { display: block; }
-        #view-form { max-width: 620px; }
+        #view-form { max-width: 900px; }
         #view-dashboard { max-width: 1200px; }
 
-        .card { background: white; border-radius: 12px; padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .card-title { font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; }
+        .card { background: white; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card-title { font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
 
-        .form-group { margin-bottom: 14px; }
+        .form-group { margin-bottom: 10px; }
         .form-group:last-child { margin-bottom: 0; }
         label { display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 5px; }
         label .req { color: #e53e3e; }
 
         input, select, textarea { width: 100%; padding: 11px 13px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 16px; color: #1a202c; background: white; transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none; appearance: none; }
         select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 36px; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #1a56db; box-shadow: 0 0 0 3px rgba(26,86,219,0.12); }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.12); }
         textarea { resize: vertical; min-height: 80px; font-size: 15px; }
 
         .toggle-group { display: flex; gap: 8px; }
         .toggle-btn { flex: 1; padding: 11px 8px; border: 1.5px solid #e2e8f0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; text-align: center; transition: all 0.15s; }
-        .toggle-btn.active { background: #ebf4ff; border-color: #1a56db; color: #1a56db; }
+        .toggle-btn.active { background: #f0fdf4; border-color: #16a34a; color: #16a34a; }
 
         .time-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: end; }
-        .duration-display { background: #f0f7ff; border: 1.5px solid #bee3f8; border-radius: 8px; padding: 11px 8px; font-size: 15px; font-weight: 700; color: #1a56db; text-align: center; }
+        .duration-display { background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 8px; padding: 11px 8px; font-size: 15px; font-weight: 700; color: #16a34a; text-align: center; }
 
-        .btn-primary { width: 100%; padding: 15px; background: #1a56db; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
-        .btn-primary:hover { background: #1648c0; }
-        .btn-secondary { padding: 8px 16px; background: white; color: #1a56db; border: 1.5px solid #1a56db; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-        .btn-secondary:hover { background: #ebf4ff; }
+        .btn-primary { width: 100%; padding: 15px; background: #16a34a; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
+        .btn-primary:hover { background: #15803d; }
+        .btn-secondary { padding: 8px 16px; background: white; color: #16a34a; border: 1.5px solid #16a34a; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+        .btn-secondary:hover { background: #f0fdf4; }
         .btn-danger-sm { padding: 3px 8px; background: none; color: #e53e3e; border: 1px solid #fed7d7; border-radius: 5px; font-size: 11px; cursor: pointer; }
         .btn-danger-sm:hover { background: #fff5f5; }
-        .btn-rapport-sm { padding: 3px 8px; background: none; color: #1a56db; border: 1px solid #bee3f8; border-radius: 5px; font-size: 11px; cursor: pointer; margin-right: 3px; }
-        .btn-rapport-sm:hover { background: #ebf4ff; }
+        .btn-rapport-sm { padding: 3px 8px; background: none; color: #16a34a; border: 1px solid #bbf7d0; border-radius: 5px; font-size: 11px; cursor: pointer; margin-right: 3px; }
+        .btn-rapport-sm:hover { background: #f0fdf4; }
 
         .success-msg { background: #f0fff4; border: 1.5px solid #68d391; border-radius: 10px; padding: 14px; text-align: center; color: #276749; font-weight: 600; font-size: 14px; display: none; margin-top: 10px; }
-        .info-box { background: #ebf8ff; border-left: 4px solid #1a56db; border-radius: 6px; padding: 11px 14px; font-size: 13px; color: #2c5282; margin-bottom: 14px; line-height: 1.5; }
+        .info-box { background: #ebf8ff; border-left: 4px solid #16a34a; border-radius: 6px; padding: 11px 14px; font-size: 13px; color: #166534; margin-bottom: 14px; line-height: 1.5; }
         .demo-box { background: #fffbeb; border-left: 4px solid #f6ad55; border-radius: 6px; padding: 11px 14px; font-size: 12px; color: #744210; margin-bottom: 14px; line-height: 1.5; }
 
         .edit-indicator { background: #fffbeb; border: 1.5px solid #f6ad55; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #744210; font-weight: 600; margin-bottom: 14px; display: none; justify-content: space-between; align-items: center; }
 
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
         .stat-card { background: white; border-radius: 12px; padding: 14px 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; }
-        .stat-value { font-size: 24px; font-weight: 800; color: #1a56db; }
+        .stat-value { font-size: 24px; font-weight: 800; color: #16a34a; }
         .stat-label { font-size: 11px; color: #718096; margin-top: 3px; }
 
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -74,9 +74,9 @@
         .cell-truncate { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cell-nowrap { white-space: nowrap; }
         .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .badge-ma { background: #ebf4ff; color: #1a56db; }
+        .badge-ma { background: #f0fdf4; color: #16a34a; }
         .badge-sub { background: #fef3c7; color: #92400e; }
-        .hours-bold { font-weight: 700; color: #1a56db; }
+        .hours-bold { font-weight: 700; color: #16a34a; }
         .note-text { color: #718096; font-size: 11px; font-style: italic; }
         .no-data { text-align: center; color: #a0aec0; padding: 30px; font-size: 13px; }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -105,7 +105,7 @@
         .rapport-company-name { font-size: 20px; font-weight: 800; color: #1a202c; }
         .rapport-doc-title { font-size: 12px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
         .rapport-logo { font-size: 36px; }
-        .rapport-divider { border: none; border-top: 2px solid #1a56db; margin: 16px 0; }
+        .rapport-divider { border: none; border-top: 2px solid #16a34a; margin: 16px 0; }
         .rapport-table { width: 100%; border-collapse: collapse; margin: 14px 0; }
         .rapport-table tr td { padding: 7px 8px; }
         .rapport-table tr:nth-child(odd) { background: #f7fafc; }
@@ -123,10 +123,14 @@
         #sig-hint { color: #a0aec0; font-size: 13px; }
         #sig-canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; display: block; }
         #sig-actions { display: flex; gap: 12px; }
-        .btn-sign { width: 100%; padding: 9px; background: #ebf4ff; color: #1a56db; border: 1.5px dashed #1a56db; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 6px; }
-        .btn-sign:hover { background: #bee3f8; }
+        .btn-sign { width: 100%; padding: 9px; background: #f0fdf4; color: #16a34a; border: 1.5px dashed #16a34a; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 6px; }
+        .btn-sign:hover { background: #bbf7d0; }
         .sig-captured { max-width: 100%; height: 52px; object-fit: contain; object-position: left bottom; display: block; }
         .sig-ok { font-size: 11px; color: #38a169; margin-top: 3px; }
+
+        @media (max-width: 680px) {
+            #view-form .form-grid { grid-template-columns: 1fr !important; }
+        }
 
         @media print {
             body > *:not(#rapport-overlay) { display: none !important; }
@@ -165,7 +169,7 @@
     <div class="header-icon">⏱</div>
     <div>
         <div class="header-title">Zeiterfassung</div>
-        <div class="header-sub" id="header-sub">Gebäudereinigung — Demo</div>
+        <div class="header-sub" id="header-sub">Gebäudereinigung</div>
     </div>
 </div>
 
@@ -179,109 +183,104 @@
 <!-- MITARBEITER-FORMULAR -->
 <div id="view-form" class="view active">
 
-    <div class="demo-box">
-        ⚠️ <strong>Demo-Version</strong> — Mitarbeiter-Ansicht.<br>
-        Büro-Ansicht öffnen: Dateiname + <code>?buero</code> in die Adresszeile
-    </div>
-
-    <div class="info-box">
-        Trag hier deine Arbeitszeit ein. Die Dauer wird automatisch berechnet.
-    </div>
-
     <div class="edit-indicator" id="edit-indicator">
         <span id="edit-indicator-text">✏ Bearbeitung läuft</span>
         <button class="btn-danger-sm" onclick="cancelEdit()">Abbrechen</button>
     </div>
 
-    <div class="card">
-        <div class="card-title">Wer bist du?</div>
-        <div class="form-group">
-            <label>Name <span class="req">*</span></label>
-            <select id="f-name" onchange="onNameChange()">
-                <option value="">— Name auswählen —</option>
-                <optgroup label="Mitarbeiter">
-                    <option>Max Müller</option>
-                    <option>Anna Schmidt</option>
-                    <option>Klaus Weber</option>
-                    <option>Petra Fischer</option>
-                </optgroup>
-                <optgroup label="Subunternehmer">
-                    <option>Reinigungsservice Nord GmbH</option>
-                    <option>Putzprofi Meier</option>
-                </optgroup>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Typ <span class="req">*</span></label>
-            <div class="toggle-group">
-                <button class="toggle-btn active" id="toggle-ma" onclick="setType('Mitarbeiter', this)">👤 Mitarbeiter</button>
-                <button class="toggle-btn" id="toggle-sub" onclick="setType('Subunternehmer', this)">🏢 Subunternehmer</button>
-            </div>
-            <input type="hidden" id="f-type" value="Mitarbeiter">
-        </div>
-    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start">
 
-    <div class="card">
-        <div class="card-title">Bei welchem Kunden?</div>
-        <div class="form-group">
-            <label>Kunde / Objekt <span class="req">*</span></label>
-            <div style="display:flex;gap:8px">
-                <select id="f-customer" style="flex:1">
-                    <option value="">— Kunde auswählen —</option>
-                </select>
-                <button type="button" class="btn-secondary" style="white-space:nowrap;flex-shrink:0" onclick="quickAddCustomer()">+ Neu</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-title">Wann warst du dort?</div>
-        <div class="form-group">
-            <label>Datum <span class="req">*</span></label>
-            <input type="date" id="f-date">
-        </div>
-        <div class="form-group">
-            <div class="time-row">
-                <div>
-                    <label>Von <span class="req">*</span></label>
-                    <input type="time" id="f-from" oninput="calcDuration()">
+        <!-- Linke Spalte: Wer + Kunde -->
+        <div>
+            <div class="card">
+                <div class="card-title">Wer bist du?</div>
+                <div class="form-group">
+                    <label>Name <span class="req">*</span></label>
+                    <select id="f-name" onchange="onNameChange()">
+                        <option value="">— Name auswählen —</option>
+                        <optgroup label="Mitarbeiter">
+                            <option>Max Müller</option>
+                            <option>Anna Schmidt</option>
+                            <option>Klaus Weber</option>
+                            <option>Petra Fischer</option>
+                        </optgroup>
+                        <optgroup label="Subunternehmer">
+                            <option>Reinigungsservice Nord GmbH</option>
+                            <option>Putzprofi Meier</option>
+                        </optgroup>
+                    </select>
                 </div>
-                <div>
-                    <label>Bis <span class="req">*</span></label>
-                    <input type="time" id="f-to" oninput="calcDuration()">
-                </div>
-                <div>
-                    <label>Dauer</label>
-                    <div class="duration-display" id="duration-display">—</div>
+                <div class="form-group">
+                    <label>Typ <span class="req">*</span></label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" id="toggle-ma" onclick="setType('Mitarbeiter', this)">👤 Mitarbeiter</button>
+                        <button class="toggle-btn" id="toggle-sub" onclick="setType('Subunternehmer', this)">🏢 Subunternehmer</button>
+                    </div>
+                    <input type="hidden" id="f-type" value="Mitarbeiter">
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-title">Bei welchem Kunden?</div>
+                <div class="form-group">
+                    <label>Kunde / Objekt <span class="req">*</span></label>
+                    <div style="display:flex;gap:8px">
+                        <select id="f-customer" style="flex:1">
+                            <option value="">— Kunde auswählen —</option>
+                        </select>
+                        <button type="button" class="btn-secondary" style="white-space:nowrap;flex-shrink:0" onclick="quickAddCustomer()">+ Neu</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card my-entries-section" id="my-entries-section">
+                <div class="card-title">Meine letzten Einträge</div>
+                <div id="my-entries-list"></div>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Bemerkung (optional)</label>
-            <textarea id="f-note" placeholder="z.B. Starke Verschmutzung Eingangsbereich, Sonderreinigung WC 2. OG…"></textarea>
+
+        <!-- Rechte Spalte: Wann + Speichern -->
+        <div>
+            <div class="card">
+                <div class="card-title">Wann warst du dort?</div>
+                <div class="form-group">
+                    <label>Datum <span class="req">*</span></label>
+                    <input type="date" id="f-date">
+                </div>
+                <div class="form-group">
+                    <div class="time-row">
+                        <div>
+                            <label>Von <span class="req">*</span></label>
+                            <input type="time" id="f-from" oninput="calcDuration()">
+                        </div>
+                        <div>
+                            <label>Bis <span class="req">*</span></label>
+                            <input type="time" id="f-to" oninput="calcDuration()">
+                        </div>
+                        <div>
+                            <label>Dauer</label>
+                            <div class="duration-display" id="duration-display">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Bemerkung (optional)</label>
+                    <textarea id="f-note" placeholder="z.B. Starke Verschmutzung Eingangsbereich, Sonderreinigung WC 2. OG…"></textarea>
+                </div>
+            </div>
+
+            <button class="btn-primary" id="submit-btn" onclick="submitEntry()">✓ Eintrag speichern</button>
+            <div class="success-msg" id="success-msg"></div>
         </div>
-    </div>
 
-    <button class="btn-primary" id="submit-btn" onclick="submitEntry()">✓ Eintrag speichern</button>
+    </div><!-- /grid -->
 
-    <div class="success-msg" id="success-msg"></div>
-
-    <div class="card my-entries-section" id="my-entries-section">
-        <div class="card-title">Meine letzten Einträge</div>
-        <div id="my-entries-list"></div>
-    </div>
-
-    <br>
 </div>
 
 
 <!-- BÜRO-DASHBOARD -->
 <div id="view-dashboard" class="view">
 
-    <div class="demo-box">
-        ⚠️ <strong>Demo-Version</strong> — Büro-Ansicht.<br>
-        Mitarbeiter-Ansicht: URL ohne <code>?buero</code> öffnen.
-    </div>
 
     <div class="stats-grid">
         <div class="stat-card">
@@ -473,10 +472,10 @@ function calcDuration() {
     const from = document.getElementById('f-from').value;
     const to   = document.getElementById('f-to').value;
     const disp = document.getElementById('duration-display');
-    if (!from || !to) { disp.textContent = '—'; disp.style.color = '#1a56db'; return; }
+    if (!from || !to) { disp.textContent = '—'; disp.style.color = '#16a34a'; return; }
     const mins = toMins(to) - toMins(from);
     if (mins <= 0) { disp.textContent = 'Fehler'; disp.style.color = '#e53e3e'; return; }
-    disp.style.color = '#1a56db';
+    disp.style.color = '#16a34a';
     const h = Math.floor(mins / 60), m = mins % 60;
     disp.textContent = m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
