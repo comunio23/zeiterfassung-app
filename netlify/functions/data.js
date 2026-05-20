@@ -1,4 +1,4 @@
-const { getStore } = require("@netlify/blobs");
+import { getStore } from "@netlify/blobs";
 
 const STORE_KEY = "app_data";
 const DEFAULT_CUSTOMERS = [
@@ -7,33 +7,34 @@ const DEFAULT_CUSTOMERS = [
   "Schule Am Sonnenstein", "Rathaus Hauptstraße"
 ];
 
-exports.handler = async (event) => {
-  const headers = {
+export default async (req) => {
+  const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Content-Type": "application/json",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   };
 
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers, body: "" };
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
-  const store = getStore({ name: "zeiterfassung", consistency: "strong" });
+  const store = getStore("zeiterfassung");
 
-  if (event.httpMethod === "GET") {
+  if (req.method === "GET") {
     const data = await store.get(STORE_KEY, { type: "json" });
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(data || { entries: [], customers: DEFAULT_CUSTOMERS })
-    };
+    return Response.json(
+      data || { entries: [], customers: DEFAULT_CUSTOMERS },
+      { headers: corsHeaders }
+    );
   }
 
-  if (event.httpMethod === "POST") {
-    const data = JSON.parse(event.body);
+  if (req.method === "POST") {
+    const data = await req.json();
     await store.setJSON(STORE_KEY, data);
-    return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
+    return Response.json({ ok: true }, { headers: corsHeaders });
   }
 
-  return { statusCode: 405, body: "Method not allowed" };
+  return new Response("Method not allowed", { status: 405 });
 };
+
+export const config = { path: "/api/data" };
