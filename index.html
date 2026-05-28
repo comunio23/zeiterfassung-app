@@ -888,8 +888,25 @@ function normalizeCustomers(list) {
 async function initData() {
     try { const r = await fetch('/api/data'); if (r.ok) APP_DATA = await r.json(); } catch(e) {}
     if (APP_DATA.customers) APP_DATA.customers = normalizeCustomers(APP_DATA.customers);
-    if (!APP_DATA.customers || APP_DATA.customers.length === 0)
+    if (!APP_DATA.customers || APP_DATA.customers.length === 0) {
+        // Noch keine Kunden gespeichert → komplette Default-Liste verwenden
         APP_DATA.customers = JSON.parse(JSON.stringify(DEFAULT_CUSTOMERS));
+        syncToServer();
+    } else {
+        // Kunden vorhanden → neue Default-Kunden ergänzen, die noch fehlen
+        const existing = new Set(APP_DATA.customers.map(c => c.name.toLowerCase()));
+        let changed = false;
+        DEFAULT_CUSTOMERS.forEach(dc => {
+            if (!existing.has(dc.name.toLowerCase())) {
+                APP_DATA.customers.push({ ...dc });
+                changed = true;
+            }
+        });
+        if (changed) {
+            APP_DATA.customers.sort((a,b) => a.name.localeCompare(b.name, 'de'));
+            syncToServer();
+        }
+    }
     document.getElementById('loading-screen').style.display = 'none';
     initUI();
 }
