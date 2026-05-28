@@ -2,179 +2,569 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Zeiterfassung — Super Cleaner</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f7ff; color: #1a202c; min-height: 100vh; }
+/* ────────────────────────────────────────────────
+   RESET & TOKENS
+──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --blue:       #0284c7;
+    --blue-dark:  #0c4a6e;
+    --blue-mid:   #0369a1;
+    --cyan:       #06b6d4;
+    --blue-light: #bae6fd;
+    --blue-pale:  #f0f9ff;
+    --green:      #10b981;
+    --amber:      #f59e0b;
+    --red:        #ef4444;
+    --gray-2:     #1a202c;
+    --gray-4:     #4a5568;
+    --gray-6:     #718096;
+    --gray-8:     #a0aec0;
+    --gray-e:     #e2e8f0;
+    --gray-f:     #f7fafc;
+    --r-lg:       20px;
+    --r-md:       14px;
+    --r-sm:       10px;
+    --shadow-sm:  0 2px 8px rgba(2,132,199,.10);
+    --shadow-md:  0 4px 24px rgba(2,132,199,.14);
+    --shadow-lg:  0 8px 40px rgba(2,132,199,.18);
+    --grad:       linear-gradient(135deg, #0c4a6e 0%, #0284c7 65%, #06b6d4 100%);
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f7ff;
+    color: var(--gray-2);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
 
-        .header { background: white; color: #0c4a6e; padding: 14px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(2,132,199,0.12); border-bottom: 3px solid #0284c7; }
-        .header-logo { width: 38px; height: 38px; background: #0284c7; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-        .header-title { font-size: 18px; font-weight: 800; color: #0c4a6e; letter-spacing: -0.3px; }
-        .header-sub { font-size: 11px; color: #0284c7; margin-top: 1px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+/* ────────────────────────────────────────────────
+   SHARED: LOADING
+──────────────────────────────────────────────── */
+.loading-screen {
+    position: fixed; inset: 0; background: var(--blue-dark); z-index: 999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+}
+.loading-logo {
+    width: 60px; height: 60px; background: rgba(255,255,255,.15); border-radius: 18px;
+    display: flex; align-items: center; justify-content: center; font-size: 28px; color: white;
+    backdrop-filter: blur(10px);
+}
+.loading-spinner {
+    width: 36px; height: 36px; border: 3px solid rgba(255,255,255,.2);
+    border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite;
+}
+.loading-text { font-size: 14px; color: rgba(255,255,255,.7); font-weight: 500; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-        .tab-nav { background: white; display: flex; border-bottom: 2px solid #e2e8f0; position: sticky; top: 63px; z-index: 99; }
-        .tab-btn { flex: 1; padding: 13px 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.15s, border-color 0.15s; }
-        .tab-btn.active { color: #0284c7; border-bottom-color: #0284c7; }
+/* ────────────────────────────────────────────────
+   SHARED: OVERLAYS (Rapport + Signatur)
+──────────────────────────────────────────────── */
+#rapport-overlay {
+    display: none; position: fixed; inset: 0; background: white; z-index: 200; overflow-y: auto;
+}
+.rapport-controls {
+    display: flex; gap: 10px; padding: 12px 20px;
+    background: var(--blue-pale); border-bottom: 2px solid var(--blue-light);
+    position: sticky; top: 0; z-index: 10;
+}
+.rapport-page {
+    max-width: 600px; margin: 24px auto; padding: 30px 36px;
+    font-family: Arial, Helvetica, sans-serif;
+    border: 1px solid #e0f0fb; border-radius: 8px; box-shadow: var(--shadow-sm);
+}
+.rapport-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+.rapport-company-name { font-size: 22px; font-weight: 800; color: var(--blue-dark); }
+.rapport-company-sub  { font-size: 12px; color: var(--blue); font-weight: 600; margin-top: 2px; }
+.rapport-doc-title    { font-size: 12px; color: var(--gray-6); text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+.rapport-logo-box {
+    width: 52px; height: 52px; background: var(--blue); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 26px; color: white;
+}
+.rapport-divider { border: none; border-top: 2px solid var(--blue); margin: 16px 0; }
+.rapport-table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+.rapport-table tr td { padding: 7px 8px; }
+.rapport-table tr:nth-child(odd) { background: #f8fbff; }
+.rapport-key { font-size: 12px; color: var(--gray-6); font-weight: 600; width: 140px; }
+.rapport-val { font-size: 14px; color: var(--gray-2); }
+.rapport-notice {
+    font-size: 12px; color: var(--gray-4); font-style: italic;
+    background: var(--blue-pale); border: 1px solid var(--blue-light);
+    border-radius: 6px; padding: 10px 14px; margin: 20px 0;
+}
+.rapport-sigs { display: flex; gap: 30px; margin-top: 30px; }
+.rapport-sig { flex: 1; }
+.rapport-sig-line { border-bottom: 1.5px solid var(--gray-2); height: 48px; margin-bottom: 6px; }
+.rapport-sig-label { font-size: 11px; color: var(--gray-6); }
+.btn-sign {
+    width: 100%; padding: 9px; background: var(--blue-pale); color: var(--blue);
+    border: 1.5px dashed var(--blue); border-radius: 7px; font-size: 13px;
+    font-weight: 600; cursor: pointer; margin-top: 6px;
+}
+.btn-sign:hover { background: var(--blue-light); }
+.sig-captured { max-width: 100%; height: 52px; object-fit: contain; object-position: left bottom; display: block; }
+.sig-ok { font-size: 11px; color: var(--green); font-weight: 600; margin-top: 3px; }
 
-        .view { display: none; padding: 16px 24px; margin: 0 auto; }
-        .view.active { display: block; }
-        #view-form { max-width: 900px; }
-        #view-dashboard { max-width: 1200px; }
+#sig-overlay {
+    display: none; position: fixed; inset: 0; background: var(--blue-dark); z-index: 300;
+    flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 14px;
+}
+#sig-title { color: white; font-size: 17px; font-weight: 700; }
+#sig-hint  { color: var(--blue-light); font-size: 13px; }
+#sig-canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; display: block; }
+#sig-actions { display: flex; gap: 12px; }
 
-        .card { background: white; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(2,132,199,0.08); border: 1px solid #e0f0fb; }
-        .card-title { font-size: 11px; font-weight: 700; color: #64b6d9; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+@media print {
+    body > *:not(#rapport-overlay) { display: none !important; }
+    #rapport-overlay { display: block !important; position: static !important; overflow: visible !important; }
+    .rapport-controls { display: none !important; }
+    .rapport-page { border: none; box-shadow: none; margin: 0; padding: 20px; max-width: 100%; }
+    .btn-sign { display: none !important; }
+}
 
-        .form-group { margin-bottom: 10px; }
-        .form-group:last-child { margin-bottom: 0; }
-        label { display: block; font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 5px; }
-        label .req { color: #e53e3e; }
+/* ────────────────────────────────────────────────
+   SHARED: HEADER & TABS
+──────────────────────────────────────────────── */
+.header {
+    background: var(--grad); padding: 15px 20px;
+    display: flex; align-items: center; gap: 13px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 20px rgba(2,132,199,.35);
+}
+.header-logo {
+    width: 40px; height: 40px; background: rgba(255,255,255,.15); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    backdrop-filter: blur(10px); flex-shrink: 0;
+}
+.header-title { font-size: 18px; font-weight: 800; color: white; letter-spacing: -.3px; }
+.header-sub   { font-size: 11px; color: rgba(255,255,255,.75); margin-top: 1px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; }
 
-        input, select, textarea { width: 100%; padding: 11px 13px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 16px; color: #1a202c; background: white; transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none; appearance: none; }
-        select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 36px; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2,132,199,0.12); }
-        textarea { resize: vertical; min-height: 80px; font-size: 15px; }
+.tab-nav { background: white; display: flex; border-bottom: 2px solid var(--gray-e); position: sticky; top: 70px; z-index: 99; }
+.tab-btn {
+    flex: 1; padding: 13px 8px; border: none; background: none; font-size: 13px;
+    font-weight: 600; color: var(--gray-6); cursor: pointer;
+    border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color .15s, border-color .15s;
+}
+.tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
 
-        .toggle-group { display: flex; gap: 8px; }
-        .toggle-btn { flex: 1; padding: 11px 8px; border: 1.5px solid #e2e8f0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; text-align: center; transition: all 0.15s; }
-        .toggle-btn.active { background: #f0f9ff; border-color: #0284c7; color: #0284c7; }
+/* ────────────────────────────────────────────────
+   SHARED: VIEW WRAPPER
+──────────────────────────────────────────────── */
+.view { display: none; }
+.view.active { display: block; }
+#view-form { background: #f0f7ff; }
+#view-dashboard { padding: 16px 24px; max-width: 1200px; margin: 0 auto; }
 
-        .time-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: end; }
-        .duration-display { background: #f0f9ff; border: 1.5px solid #bae6fd; border-radius: 8px; padding: 11px 8px; font-size: 15px; font-weight: 700; color: #0284c7; text-align: center; }
 
-        .btn-primary { width: 100%; padding: 15px; background: #0284c7; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
-        .btn-primary:hover { background: #0369a1; }
-        .btn-secondary { padding: 8px 16px; background: white; color: #0284c7; border: 1.5px solid #0284c7; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-        .btn-secondary:hover { background: #f0f9ff; }
-        .btn-danger-sm { padding: 3px 8px; background: none; color: #e53e3e; border: 1px solid #fed7d7; border-radius: 5px; font-size: 11px; cursor: pointer; }
-        .btn-danger-sm:hover { background: #fff5f5; }
-        .btn-rapport-sm { padding: 3px 8px; background: none; color: #0284c7; border: 1px solid #bae6fd; border-radius: 5px; font-size: 11px; cursor: pointer; margin-right: 3px; }
-        .btn-rapport-sm:hover { background: #f0f9ff; }
+/* ════════════════════════════════════════════════
+   EMPLOYEE VIEW — MODERN REDESIGN 2026
+════════════════════════════════════════════════ */
 
-        .success-msg { background: #f0f9ff; border: 1.5px solid #7dd3fc; border-radius: 10px; padding: 14px; text-align: center; color: #0c4a6e; font-weight: 600; font-size: 14px; display: none; margin-top: 10px; }
+.emp-container {
+    max-width: 600px; margin: 0 auto;
+    padding: 20px 16px 48px;
+}
 
-        .edit-indicator { background: #fffbeb; border: 1.5px solid #f6ad55; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #744210; font-weight: 600; margin-bottom: 14px; display: none; justify-content: space-between; align-items: center; }
+/* — Wer bist du? ——————————————————————————————— */
+.emp-identity-card {
+    background: white; border-radius: var(--r-lg); padding: 20px;
+    box-shadow: var(--shadow-md); margin-bottom: 14px;
+    border: 1px solid rgba(2,132,199,.10);
+}
+.emp-field-label {
+    font-size: 12px; font-weight: 700; color: var(--gray-6);
+    text-transform: uppercase; letter-spacing: .7px; margin-bottom: 8px;
+}
+.emp-field-label .req { color: var(--red); }
+.emp-select-wrap { position: relative; }
+.emp-select {
+    width: 100%; padding: 14px 42px 14px 16px;
+    border: 1.5px solid var(--gray-e); border-radius: var(--r-md);
+    font-size: 16px; font-weight: 600; color: var(--gray-2);
+    background: white; -webkit-appearance: none; appearance: none; cursor: pointer;
+    transition: border-color .2s, box-shadow .2s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%230284c7' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+}
+.emp-select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(2,132,199,.12); }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
-        .stat-card { background: white; border-radius: 12px; padding: 14px 10px; box-shadow: 0 1px 4px rgba(2,132,199,0.08); border: 1px solid #e0f0fb; text-align: center; }
-        .stat-value { font-size: 24px; font-weight: 800; color: #0284c7; }
-        .stat-label { font-size: 11px; color: #718096; margin-top: 3px; }
+/* — Welcome Banner ————————————————————————————— */
+.emp-welcome {
+    background: var(--grad); border-radius: var(--r-lg); padding: 20px;
+    margin-bottom: 14px; display: none;
+    box-shadow: 0 6px 28px rgba(2,132,199,.30);
+    animation: fadeSlideIn .25s ease;
+}
+.emp-welcome-inner { display: flex; justify-content: space-between; align-items: center; }
+.emp-welcome-greeting {
+    font-size: 20px; font-weight: 800; color: white; letter-spacing: -.3px;
+}
+.emp-welcome-stats { font-size: 13px; color: rgba(255,255,255,.75); margin-top: 5px; font-weight: 500; }
+.emp-type-pill {
+    font-size: 11px; font-weight: 800; letter-spacing: .5px;
+    padding: 5px 12px; border-radius: 20px;
+    background: rgba(255,255,255,.18); color: white;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.25);
+}
+.emp-type-pill.sub-type { background: rgba(251,191,36,.25); color: #fef3c7; border-color: rgba(251,191,36,.4); }
 
-        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .filter-grid .full { grid-column: 1 / -1; }
+/* — Edit-Indikator ————————————————————————————— */
+.emp-edit-banner {
+    background: #fffbeb; border: 1.5px solid #f6ad55; border-radius: var(--r-md);
+    padding: 13px 16px; margin-bottom: 14px; display: none;
+    align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(246,173,85,.15);
+    animation: fadeSlideIn .2s ease;
+}
+.emp-edit-banner-text { font-size: 13px; font-weight: 700; color: #744210; }
+.emp-edit-cancel {
+    padding: 6px 14px; background: white; color: var(--red);
+    border: 1.5px solid #fed7d7; border-radius: 8px; font-size: 12px;
+    font-weight: 700; cursor: pointer; flex-shrink: 0;
+}
 
-        .table-wrapper { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #f0f9ff; padding: 9px 11px; text-align: left; font-weight: 700; font-size: 11px; color: #0369a1; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 2px solid #bae6fd; white-space: nowrap; }
-        td { padding: 9px 11px; border-bottom: 1px solid #f0f4f8; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #f8fbff; }
-        .cell-truncate { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cell-nowrap { white-space: nowrap; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .badge-ma { background: #f0f9ff; color: #0284c7; }
-        .badge-sub { background: #fef3c7; color: #92400e; }
-        .hours-bold { font-weight: 700; color: #0284c7; }
-        .note-text { color: #718096; font-size: 11px; font-style: italic; }
-        .no-data { text-align: center; color: #a0aec0; padding: 30px; font-size: 13px; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .totals-row td { font-weight: 700; background: #f0f9ff; border-top: 2px solid #bae6fd; }
+/* — Section heading ——————————————————————————— */
+.emp-section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 20px 0 10px;
+}
+.emp-section-title {
+    font-size: 13px; font-weight: 800; color: var(--gray-4);
+    text-transform: uppercase; letter-spacing: .7px;
+}
+.emp-section-count {
+    font-size: 11px; font-weight: 700; color: var(--blue);
+    background: var(--blue-pale); border: 1px solid var(--blue-light);
+    padding: 2px 9px; border-radius: 20px;
+}
 
-        .my-entries-section { display: none; margin-top: 6px; }
-        .my-entry-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f4f8; }
-        .my-entry-item:last-child { border-bottom: none; }
-        .my-entry-info { flex: 1; min-width: 0; }
-        .my-entry-main { font-size: 13px; font-weight: 600; color: #1a202c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .my-entry-sub { font-size: 12px; color: #718096; margin-top: 2px; }
-        .my-entry-actions { display: flex; gap: 5px; flex-shrink: 0; }
+/* — Entry cards (history) ————————————————————— */
+.emp-entry-card {
+    background: white; border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm); margin-bottom: 10px;
+    display: flex; overflow: hidden;
+    border: 1px solid rgba(2,132,199,.08);
+    animation: fadeSlideIn .25s ease;
+    transition: box-shadow .2s;
+}
+.emp-entry-card:active { box-shadow: var(--shadow-md); }
 
-        .kunden-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f4f8; font-size: 14px; }
-        .kunden-item:last-child { border-bottom: none; }
-        .kunden-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
-        .kunden-add-row input { flex: 1; font-size: 14px; padding: 8px 11px; width: auto; }
+.emp-entry-bar { width: 5px; flex-shrink: 0; }
+.bar-today     { background: var(--grad); }
+.bar-yesterday { background: linear-gradient(180deg, #0284c7, #38bdf8); }
+.bar-recent    { background: #7dd3fc; }
+.bar-older     { background: #cbd5e0; }
 
-        /* Live-Indikator */
-        .live-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #0284c7; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 20px; padding: 3px 10px; }
-        .live-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+.emp-entry-body { flex: 1; padding: 15px 16px; min-width: 0; }
 
-        /* Rapportzettel Overlay */
-        #rapport-overlay { display: none; position: fixed; inset: 0; background: white; z-index: 200; overflow-y: auto; }
-        .rapport-controls { display: flex; gap: 10px; padding: 12px 20px; background: #f0f9ff; border-bottom: 2px solid #bae6fd; position: sticky; top: 0; z-index: 10; }
-        .rapport-page { max-width: 600px; margin: 24px auto; padding: 30px 36px; font-family: Arial, Helvetica, sans-serif; border: 1px solid #e0f0fb; border-radius: 8px; box-shadow: 0 2px 12px rgba(2,132,199,0.08); }
-        .rapport-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
-        .rapport-company-name { font-size: 22px; font-weight: 800; color: #0c4a6e; }
-        .rapport-company-sub { font-size: 12px; color: #0284c7; font-weight: 600; margin-top: 2px; }
-        .rapport-doc-title { font-size: 12px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
-        .rapport-logo-box { width: 52px; height: 52px; background: #0284c7; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: white; }
-        .rapport-divider { border: none; border-top: 2px solid #0284c7; margin: 16px 0; }
-        .rapport-table { width: 100%; border-collapse: collapse; margin: 14px 0; }
-        .rapport-table tr td { padding: 7px 8px; }
-        .rapport-table tr:nth-child(odd) { background: #f8fbff; }
-        .rapport-key { font-size: 12px; color: #718096; font-weight: 600; width: 140px; }
-        .rapport-val { font-size: 14px; color: #1a202c; }
-        .rapport-notice { font-size: 12px; color: #4a5568; font-style: italic; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 10px 14px; margin: 20px 0; }
-        .rapport-sigs { display: flex; gap: 30px; margin-top: 30px; }
-        .rapport-sig { flex: 1; }
-        .rapport-sig-line { border-bottom: 1.5px solid #1a202c; height: 48px; margin-bottom: 6px; }
-        .rapport-sig-label { font-size: 11px; color: #718096; }
+.emp-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.emp-entry-date-label {
+    font-size: 11px; font-weight: 700; color: var(--gray-6);
+    text-transform: uppercase; letter-spacing: .5px;
+}
+.emp-hours-pill {
+    font-size: 12px; font-weight: 800; padding: 3px 11px;
+    border-radius: 20px; border: 1.5px solid; white-space: nowrap;
+}
 
-        /* Unterschrift-Pad */
-        #sig-overlay { display: none; position: fixed; inset: 0; background: #0c4a6e; z-index: 300; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 14px; }
-        #sig-title { color: white; font-size: 17px; font-weight: 700; }
-        #sig-hint { color: #7dd3fc; font-size: 13px; }
-        #sig-canvas { background: white; border-radius: 10px; cursor: crosshair; touch-action: none; display: block; }
-        #sig-actions { display: flex; gap: 12px; }
-        .btn-sign { width: 100%; padding: 9px; background: #f0f9ff; color: #0284c7; border: 1.5px dashed #0284c7; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 6px; }
-        .btn-sign:hover { background: #bae6fd; }
-        .sig-captured { max-width: 100%; height: 52px; object-fit: contain; object-position: left bottom; display: block; }
-        .sig-ok { font-size: 11px; color: #0284c7; margin-top: 3px; }
+.emp-entry-customer {
+    font-size: 16px; font-weight: 800; color: var(--gray-2);
+    line-height: 1.2; margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.emp-entry-addr {
+    font-size: 12px; color: var(--blue-mid); font-weight: 500;
+    margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.emp-entry-time { font-size: 13px; color: var(--gray-6); margin-bottom: 4px; }
+.emp-signed-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 11px; font-weight: 700; color: var(--green);
+    background: #f0fdf4; border: 1px solid #6ee7b7;
+    padding: 1px 7px; border-radius: 20px;
+}
+.emp-entry-note {
+    font-size: 12px; color: var(--gray-6); font-style: italic;
+    margin-top: 4px; margin-bottom: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.emp-entry-actions { display: flex; gap: 6px; margin-top: 10px; }
+.emp-btn-rapport {
+    padding: 6px 12px; background: var(--blue-pale); color: var(--blue);
+    border: 1px solid var(--blue-light); border-radius: 8px;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s;
+}
+.emp-btn-rapport:hover { background: var(--blue-light); }
+.emp-btn-edit {
+    padding: 6px 12px; background: #faf5ff; color: #7c3aed;
+    border: 1px solid #ddd6fe; border-radius: 8px;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s;
+}
+.emp-btn-edit:hover { background: #f3e8ff; }
+.emp-btn-delete {
+    padding: 6px 10px; background: #fff5f5; color: var(--red);
+    border: 1px solid #fed7d7; border-radius: 8px;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: background .15s;
+    margin-left: auto;
+}
+.emp-btn-delete:hover { background: #fee2e2; }
 
-        /* Loading */
-        .loading-screen { position: fixed; inset: 0; background: white; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
-        .loading-spinner { width: 40px; height: 40px; border: 4px solid #bae6fd; border-top-color: #0284c7; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { font-size: 14px; color: #0369a1; font-weight: 600; }
+/* — Divider new-entry ————————————————————————— */
+.emp-divider {
+    display: flex; align-items: center; gap: 12px; margin: 22px 0 14px;
+}
+.emp-divider-line { flex: 1; height: 1px; background: var(--gray-e); }
+.emp-divider-text {
+    font-size: 12px; font-weight: 800; color: var(--blue);
+    text-transform: uppercase; letter-spacing: .7px;
+    background: #f0f7ff; padding: 0 4px;
+}
 
-        @media (max-width: 680px) {
-            #view-form > div { grid-template-columns: 1fr !important; }
-            .view { padding: 12px 14px; }
-        }
+/* — Form cards ———————————————————————————————— */
+.emp-form-card {
+    background: white; border-radius: var(--r-lg); padding: 18px 18px 16px;
+    box-shadow: var(--shadow-sm); margin-bottom: 10px;
+    border: 1px solid rgba(2,132,199,.08);
+}
+.emp-form-card + .emp-form-card { margin-top: 0; }
+.emp-field { margin-bottom: 14px; }
+.emp-field:last-child { margin-bottom: 0; }
 
-        @media print {
-            body > *:not(#rapport-overlay) { display: none !important; }
-            #rapport-overlay { display: block !important; position: static !important; overflow: visible !important; }
-            .rapport-controls { display: none !important; }
-            .rapport-page { border: none; box-shadow: none; margin: 0; padding: 20px; max-width: 100%; }
-            .btn-sign { display: none !important; }
-        }
+.emp-input, .emp-textarea {
+    width: 100%; padding: 13px 15px;
+    border: 1.5px solid var(--gray-e); border-radius: var(--r-md);
+    font-size: 16px; color: var(--gray-2); background: white;
+    -webkit-appearance: none; appearance: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+.emp-input:focus, .emp-textarea:focus {
+    outline: none; border-color: var(--blue);
+    box-shadow: 0 0 0 4px rgba(2,132,199,.10);
+}
+.emp-textarea { resize: vertical; min-height: 80px; font-size: 15px; font-family: inherit; }
+
+/* Time row */
+.emp-time-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+.emp-duration-pill {
+    background: var(--blue-pale); border: 1.5px solid var(--blue-light);
+    border-radius: var(--r-md); padding: 13px 10px;
+    font-size: 15px; font-weight: 800; color: var(--blue); text-align: center;
+    white-space: nowrap; min-width: 64px;
+}
+
+/* Address hint */
+.emp-address-hint {
+    display: none; margin-top: 8px;
+    background: var(--blue-pale); border: 1px solid var(--blue-light);
+    border-radius: var(--r-sm); padding: 8px 12px;
+    font-size: 12px; color: var(--blue-mid); font-weight: 500;
+}
+
+/* Customer row */
+.emp-customer-row { display: flex; gap: 8px; }
+.emp-customer-row .emp-select { flex: 1; }
+.emp-btn-new-customer {
+    padding: 13px 14px; background: var(--blue-pale); color: var(--blue);
+    border: 1.5px solid var(--blue-light); border-radius: var(--r-md);
+    font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    flex-shrink: 0; transition: background .15s;
+}
+.emp-btn-new-customer:hover { background: var(--blue-light); }
+
+/* — Submit button ————————————————————————————— */
+.emp-submit {
+    width: 100%; padding: 17px; margin-top: 4px;
+    background: var(--grad); color: white; border: none;
+    border-radius: var(--r-lg); font-size: 17px; font-weight: 800;
+    cursor: pointer; letter-spacing: .2px;
+    box-shadow: 0 6px 24px rgba(2,132,199,.35);
+    transition: transform .15s, box-shadow .15s;
+}
+.emp-submit:hover  { box-shadow: 0 8px 32px rgba(2,132,199,.45); }
+.emp-submit:active { transform: scale(.98); box-shadow: 0 3px 12px rgba(2,132,199,.25); }
+.emp-submit.editing-mode { background: linear-gradient(135deg, #92400e, #f59e0b); }
+
+/* — Success banner ———————————————————————————— */
+.emp-success {
+    display: none; background: linear-gradient(135deg, #059669, #10b981);
+    color: white; border-radius: var(--r-lg); padding: 16px 20px;
+    margin-top: 10px; font-weight: 700; font-size: 14px;
+    box-shadow: 0 4px 16px rgba(16,185,129,.30);
+    animation: fadeSlideIn .3s ease;
+}
+.emp-success-rapport {
+    display: inline-block; margin-top: 10px;
+    padding: 7px 16px; background: rgba(255,255,255,.2);
+    color: white; border: 1.5px solid rgba(255,255,255,.4);
+    border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
+    backdrop-filter: blur(8px);
+}
+.emp-success-rapport:hover { background: rgba(255,255,255,.3); }
+
+/* — No entries placeholder ——————————————————— */
+.emp-empty {
+    text-align: center; padding: 28px 20px;
+    background: white; border-radius: var(--r-lg);
+    border: 1.5px dashed var(--gray-e);
+    color: var(--gray-8); font-size: 14px; margin-bottom: 10px;
+}
+.emp-empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+/* ────────────────────────────────────────────────
+   ANIMATIONS
+──────────────────────────────────────────────── */
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ════════════════════════════════════════════════
+   OFFICE DASHBOARD VIEW
+════════════════════════════════════════════════ */
+.card {
+    background: white; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(2,132,199,.08); border: 1px solid #e0f0fb;
+}
+.card-title {
+    font-size: 11px; font-weight: 700; color: #64b6d9;
+    text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px;
+}
+input, select, textarea {
+    width: 100%; padding: 11px 13px; border: 1.5px solid var(--gray-e);
+    border-radius: 8px; font-size: 16px; color: var(--gray-2); background: white;
+    transition: border-color .15s, box-shadow .15s;
+    -webkit-appearance: none; appearance: none;
+}
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 13px center; padding-right: 36px;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(2,132,199,.12);
+}
+textarea { resize: vertical; min-height: 80px; font-size: 15px; }
+label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-4); margin-bottom: 5px; }
+.btn-primary {
+    width: 100%; padding: 15px; background: var(--blue); color: white; border: none;
+    border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background .15s; margin-top: 4px;
+}
+.btn-primary:hover { background: var(--blue-mid); }
+.btn-secondary {
+    padding: 8px 16px; background: white; color: var(--blue);
+    border: 1.5px solid var(--blue); border-radius: 7px;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s;
+}
+.btn-secondary:hover { background: var(--blue-pale); }
+.btn-danger-sm {
+    padding: 3px 8px; background: none; color: var(--red);
+    border: 1px solid #fed7d7; border-radius: 5px; font-size: 11px; cursor: pointer;
+}
+.btn-danger-sm:hover { background: #fff5f5; }
+.btn-rapport-sm {
+    padding: 3px 8px; background: none; color: var(--blue);
+    border: 1px solid var(--blue-light); border-radius: 5px; font-size: 11px; cursor: pointer; margin-right: 3px;
+}
+.btn-rapport-sm:hover { background: var(--blue-pale); }
+.btn-edit-sm {
+    padding: 3px 8px; background: none; color: #7c3aed;
+    border: 1px solid #ddd6fe; border-radius: 5px; font-size: 11px; cursor: pointer;
+}
+.btn-edit-sm:hover { background: #f5f3ff; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+.stat-card {
+    background: white; border-radius: 12px; padding: 14px 10px;
+    box-shadow: 0 1px 4px rgba(2,132,199,.08); border: 1px solid #e0f0fb; text-align: center;
+}
+.stat-card.last-month { border-color: #c7d2fe; background: #f5f3ff; }
+.stat-card.last-month .stat-value { color: #7c3aed; }
+.stat-value { font-size: 22px; font-weight: 800; color: var(--blue); }
+.stat-label { font-size: 11px; color: var(--gray-6); margin-top: 3px; }
+.filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.filter-grid .full { grid-column: 1 / -1; }
+.table-wrapper { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+    background: var(--blue-pale); padding: 9px 11px; text-align: left; font-weight: 700;
+    font-size: 11px; color: #0369a1; text-transform: uppercase; letter-spacing: .4px;
+    border-bottom: 2px solid var(--blue-light); white-space: nowrap;
+}
+td { padding: 9px 11px; border-bottom: 1px solid #f0f4f8; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fbff; }
+.cell-truncate { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell-nowrap { white-space: nowrap; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.badge-ma  { background: var(--blue-pale); color: var(--blue); }
+.badge-sub { background: #fef3c7; color: #92400e; }
+.badge-signed {
+    display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px;
+    border-radius: 20px; font-size: 11px; font-weight: 700;
+    background: #f0fdf4; color: var(--green); border: 1px solid #6ee7b7;
+}
+.hours-bold { font-weight: 700; color: var(--blue); }
+.note-text { color: var(--gray-6); font-size: 11px; font-style: italic; }
+.no-data { text-align: center; color: var(--gray-8); padding: 30px; font-size: 13px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.totals-row td { font-weight: 700; background: var(--blue-pale); border-top: 2px solid var(--blue-light); }
+.live-badge {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px;
+    font-weight: 700; color: var(--blue); background: var(--blue-pale);
+    border: 1px solid var(--blue-light); border-radius: 20px; padding: 3px 10px;
+}
+.live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+.signed-rapport-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f4f8; }
+.signed-rapport-item:last-child { border-bottom: none; }
+.signed-rapport-info { flex: 1; min-width: 0; }
+.signed-rapport-main { font-size: 13px; font-weight: 600; color: var(--gray-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.signed-rapport-sub  { font-size: 12px; color: var(--gray-6); margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.signed-rapport-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.kunden-item { padding: 10px 0; border-bottom: 1px solid #f0f4f8; }
+.kunden-item:last-child { border-bottom: none; }
+.kunden-item-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.kunden-item-name { font-size: 14px; font-weight: 600; }
+.kunden-item-addr { font-size: 12px; color: var(--gray-6); margin-top: 3px; }
+.kunden-item-btns { display: flex; gap: 5px; flex-shrink: 0; }
+
+@media (max-width: 680px) {
+    #view-dashboard { padding: 12px 14px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .emp-time-row { grid-template-columns: 1fr 1fr; }
+    .emp-time-row > div:last-child { grid-column: 1 / -1; }
+    .emp-duration-pill { text-align: left; }
+}
     </style>
 </head>
 <body>
 
 <!-- Loading Screen -->
 <div class="loading-screen" id="loading-screen">
+    <div class="loading-logo">✦</div>
     <div class="loading-spinner"></div>
-    <div class="loading-text">Daten werden geladen…</div>
+    <div class="loading-text">Super Cleaner wird geladen…</div>
 </div>
 
 <!-- Unterschrift-Pad -->
 <div id="sig-overlay">
     <div id="sig-title">Unterschrift des Kunden</div>
-    <div id="sig-hint">Bitte mit dem Finger oder Stift unterschreiben</div>
+    <div id="sig-hint">Mit Finger oder Stift unterschreiben</div>
     <canvas id="sig-canvas"></canvas>
     <div id="sig-actions">
-        <button class="btn-secondary" style="background:transparent;color:white;border-color:#4a5568" onclick="clearSig()">Löschen</button>
-        <button class="btn-primary" style="width:auto;padding:12px 28px" onclick="confirmSig()">✓ Unterschrift übernehmen</button>
+        <button class="btn-secondary" style="background:transparent;color:white;border-color:rgba(255,255,255,.3)" onclick="clearSig()">Löschen</button>
+        <button class="btn-primary" style="width:auto;padding:12px 28px" onclick="confirmSig()">✓ Übernehmen</button>
     </div>
-    <button style="background:none;border:none;color:#7dd3fc;cursor:pointer;font-size:13px" onclick="cancelSig()">Abbrechen</button>
+    <button style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:13px;margin-top:4px" onclick="cancelSig()">Abbrechen</button>
 </div>
 
-<!-- Rapportzettel Overlay -->
+<!-- Rapportzettel -->
 <div id="rapport-overlay">
     <div class="rapport-controls">
         <button class="btn-secondary" onclick="closeRapport()">✕ Schließen</button>
-        <button class="btn-primary" style="width:auto;padding:10px 24px" onclick="window.print()">🖨 Drucken / PDF speichern</button>
+        <button class="btn-primary" style="width:auto;padding:10px 24px" onclick="window.print()">🖨 Drucken / PDF</button>
     </div>
     <div id="rapport-content"></div>
 </div>
@@ -188,122 +578,152 @@
     </div>
 </div>
 
-<!-- Tabs -->
-<div class="tab-nav" id="tab-nav">
-    <button class="tab-btn active" id="tab-form" onclick="showTab('form', this)">📋 Eintrag erfassen</button>
-    <button class="tab-btn" id="tab-dashboard" onclick="showTab('dashboard', this)">📊 Büro-Übersicht</button>
+<!-- Tabs (nur sichtbar, wenn beide Ansichten zugänglich) -->
+<div class="tab-nav" id="tab-nav" style="display:none">
+    <button class="tab-btn active" onclick="showTab('form', this)">📋 Erfassen</button>
+    <button class="tab-btn" onclick="showTab('dashboard', this)">📊 Büro</button>
 </div>
 
 
-<!-- MITARBEITER-FORMULAR -->
+<!-- ════════════ MITARBEITER-VIEW ════════════ -->
 <div id="view-form" class="view active">
+<div class="emp-container">
 
-    <div class="edit-indicator" id="edit-indicator">
-        <span id="edit-indicator-text">✏ Bearbeitung läuft</span>
-        <button class="btn-danger-sm" onclick="cancelEdit()">Abbrechen</button>
+    <!-- SCHRITT 1: Wer bist du? -->
+    <div class="emp-identity-card">
+        <div class="emp-field-label">Wer bist du heute? <span class="req">*</span></div>
+        <div class="emp-select-wrap">
+            <select id="f-name" class="emp-select" onchange="onNameChange()">
+                <option value="">— Name auswählen —</option>
+                <optgroup label="Mitarbeiter">
+                    <option>Max Müller</option>
+                    <option>Anna Schmidt</option>
+                    <option>Klaus Weber</option>
+                    <option>Petra Fischer</option>
+                </optgroup>
+                <optgroup label="Subunternehmer">
+                    <option>Reinigungsservice Nord GmbH</option>
+                    <option>Putzprofi Meier</option>
+                </optgroup>
+            </select>
+        </div>
+        <input type="hidden" id="f-type" value="Mitarbeiter">
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">
+    <!-- Welcome Banner -->
+    <div class="emp-welcome" id="emp-welcome">
+        <div class="emp-welcome-inner">
+            <div>
+                <div class="emp-welcome-greeting">Hey, <span id="emp-first-name"></span>! 👋</div>
+                <div class="emp-welcome-stats" id="emp-welcome-stats">Lade Daten…</div>
+            </div>
+            <div class="emp-type-pill" id="emp-type-pill">MA</div>
+        </div>
+    </div>
 
-        <!-- Linke Spalte -->
-        <div>
-            <div class="card">
-                <div class="card-title">Wer bist du?</div>
-                <div class="form-group">
-                    <label>Name <span class="req">*</span></label>
-                    <select id="f-name" onchange="onNameChange()">
-                        <option value="">— Name auswählen —</option>
-                        <optgroup label="Mitarbeiter">
-                            <option>Max Müller</option>
-                            <option>Anna Schmidt</option>
-                            <option>Klaus Weber</option>
-                            <option>Petra Fischer</option>
-                        </optgroup>
-                        <optgroup label="Subunternehmer">
-                            <option>Reinigungsservice Nord GmbH</option>
-                            <option>Putzprofi Meier</option>
-                        </optgroup>
+    <!-- Edit-Indikator -->
+    <div class="emp-edit-banner" id="edit-indicator">
+        <span class="emp-edit-banner-text" id="edit-indicator-text">✏ Bearbeitung läuft</span>
+        <button class="emp-edit-cancel" onclick="cancelEdit()">Abbrechen</button>
+    </div>
+
+    <!-- Divider vor Formular -->
+    <div class="emp-divider" id="emp-form-divider">
+        <div class="emp-divider-line"></div>
+        <span class="emp-divider-text" id="emp-divider-label">+ Neuer Eintrag</span>
+        <div class="emp-divider-line"></div>
+    </div>
+
+    <!-- FORMULAR: Kunde -->
+    <div class="emp-form-card">
+        <div class="emp-field">
+            <div class="emp-field-label">Kunde / Objekt <span class="req">*</span></div>
+            <div class="emp-customer-row">
+                <select id="f-customer" class="emp-select" onchange="onCustomerChange()">
+                    <option value="">— Kunde auswählen —</option>
+                </select>
+                <button class="emp-btn-new-customer" onclick="quickAddCustomer()">+ Neu</button>
+            </div>
+            <div class="emp-address-hint" id="customer-address-hint">
+                📍 <span id="customer-address-text"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORMULAR: Zeit -->
+    <div class="emp-form-card">
+        <div class="emp-field">
+            <div class="emp-field-label">Datum <span class="req">*</span></div>
+            <input type="date" id="f-date" class="emp-input">
+        </div>
+        <div class="emp-field" style="margin-bottom:0">
+            <div class="emp-field-label">Arbeitszeit <span class="req">*</span></div>
+            <div class="emp-time-row">
+                <div>
+                    <div class="emp-field-label" style="margin-bottom:4px;font-size:11px">Von</div>
+                    <select id="f-from" class="emp-select" onchange="calcDuration()">
+                        <option value="">— Uhrzeit —</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Typ <span class="req">*</span></label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn active" id="toggle-ma" onclick="setType('Mitarbeiter', this)">👤 Mitarbeiter</button>
-                        <button class="toggle-btn" id="toggle-sub" onclick="setType('Subunternehmer', this)">🏢 Subunternehmer</button>
-                    </div>
-                    <input type="hidden" id="f-type" value="Mitarbeiter">
+                <div>
+                    <div class="emp-field-label" style="margin-bottom:4px;font-size:11px">Bis</div>
+                    <select id="f-to" class="emp-select" onchange="calcDuration()">
+                        <option value="">— Uhrzeit —</option>
+                    </select>
                 </div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">Bei welchem Kunden?</div>
-                <div class="form-group">
-                    <label>Kunde / Objekt <span class="req">*</span></label>
-                    <div style="display:flex;gap:8px">
-                        <select id="f-customer" style="flex:1">
-                            <option value="">— Kunde auswählen —</option>
-                        </select>
-                        <button type="button" class="btn-secondary" style="white-space:nowrap;flex-shrink:0" onclick="quickAddCustomer()">+ Neu</button>
-                    </div>
+                <div>
+                    <div class="emp-field-label" style="margin-bottom:4px;font-size:11px">Dauer</div>
+                    <div class="emp-duration-pill" id="duration-display">—</div>
                 </div>
-            </div>
-
-            <div class="card my-entries-section" id="my-entries-section">
-                <div class="card-title">Meine letzten Einträge</div>
-                <div id="my-entries-list"></div>
             </div>
         </div>
-
-        <!-- Rechte Spalte -->
-        <div>
-            <div class="card">
-                <div class="card-title">Wann warst du dort?</div>
-                <div class="form-group">
-                    <label>Datum <span class="req">*</span></label>
-                    <input type="date" id="f-date">
-                </div>
-                <div class="form-group">
-                    <div class="time-row">
-                        <div>
-                            <label>Von <span class="req">*</span></label>
-                            <input type="time" id="f-from" oninput="calcDuration()">
-                        </div>
-                        <div>
-                            <label>Bis <span class="req">*</span></label>
-                            <input type="time" id="f-to" oninput="calcDuration()">
-                        </div>
-                        <div>
-                            <label>Dauer</label>
-                            <div class="duration-display" id="duration-display">—</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Bemerkung (optional)</label>
-                    <textarea id="f-note" placeholder="z.B. Starke Verschmutzung Eingangsbereich, Sonderreinigung WC 2. OG…"></textarea>
-                </div>
-            </div>
-
-            <button class="btn-primary" id="submit-btn" onclick="submitEntry()">✓ Eintrag speichern</button>
-            <div class="success-msg" id="success-msg"></div>
-        </div>
-
     </div>
+
+    <!-- FORMULAR: Bemerkung -->
+    <div class="emp-form-card">
+        <div class="emp-field">
+            <div class="emp-field-label">Bemerkung <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--gray-8)">(optional)</span></div>
+            <textarea id="f-note" class="emp-textarea" placeholder="z.B. Starke Verschmutzung Eingangsbereich, Sonderreinigung WC 2. OG…"></textarea>
+        </div>
+    </div>
+
+    <!-- Submit -->
+    <button class="emp-submit" id="submit-btn" onclick="submitEntry()">✓ Eintrag speichern</button>
+    <div class="emp-success" id="success-msg"></div>
+
+    <!-- VERLAUF: Letzte Einträge — ganz unten, zum Runterscrollen -->
+    <div id="emp-history-section" style="display:none">
+        <div class="emp-section-head" style="margin-top:28px">
+            <span class="emp-section-title">Zuletzt eingetragen</span>
+            <span class="emp-section-count" id="emp-history-count"></span>
+        </div>
+        <div id="emp-history-list"></div>
+    </div>
+
+    <div style="height:20px"></div>
+</div>
 </div>
 
 
-<!-- BÜRO-DASHBOARD -->
+<!-- ════════════ BÜRO-DASHBOARD ════════════ -->
 <div id="view-dashboard" class="view">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div class="live-badge"><span class="live-dot"></span> Live — aktualisiert alle 20 Sek.</div>
-        <button class="btn-secondary" onclick="refreshDashboard()">↻ Jetzt aktualisieren</button>
+        <div class="live-badge"><span class="live-dot"></span> Live — alle 20 Sek.</div>
+        <div style="display:flex;align-items:center;gap:8px">
+            <span id="refresh-status" style="font-size:11px;color:var(--gray-6);display:none"></span>
+            <button id="refresh-btn" class="btn-secondary" onclick="refreshDashboard()">↻ Aktualisieren</button>
+        </div>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-value" id="stat-hours">—</div>
-            <div class="stat-label">Std. diesen Monat</div>
+            <div class="stat-label" id="stat-label-this">Std. diesen Monat</div>
+        </div>
+        <div class="stat-card last-month">
+            <div class="stat-value" id="stat-hours-last">—</div>
+            <div class="stat-label" id="stat-label-last">Std. letzten Monat</div>
         </div>
         <div class="stat-card">
             <div class="stat-value" id="stat-entries">—</div>
@@ -315,16 +735,33 @@
         </div>
     </div>
 
+    <!-- Unterschriebene Rapportzettel -->
+    <div class="card">
+        <div class="section-header" onclick="toggleSignedRapports()" style="cursor:pointer;user-select:none">
+            <div style="display:flex;align-items:center;gap:8px">
+                <div class="card-title" style="margin:0">✅ Unterschriebene Rapportzettel</div>
+                <span class="badge-signed" id="signed-count-badge" style="display:none">0</span>
+            </div>
+            <span id="signed-toggle-icon" style="font-size:12px;color:var(--gray-6)">▼ Einklappen</span>
+        </div>
+        <div id="signed-rapports-body" style="margin-top:12px">
+            <div id="signed-rapports-container"></div>
+        </div>
+    </div>
+
     <!-- Kundenverwaltung -->
     <div class="card">
         <div class="section-header" onclick="toggleKunden()" style="cursor:pointer;user-select:none">
             <div class="card-title" style="margin:0">👥 Kunden verwalten</div>
-            <span id="kunden-toggle-icon" style="font-size:12px;color:#718096">▶ Ausklappen</span>
+            <span id="kunden-toggle-icon" style="font-size:12px;color:var(--gray-6)">▶ Ausklappen</span>
         </div>
         <div id="kunden-body" style="display:none;margin-top:12px">
-            <div class="kunden-add-row">
-                <input type="text" id="new-customer-input" placeholder="Neuer Kundenname…" onkeydown="if(event.key==='Enter')addCustomerFromUI()">
-                <button class="btn-secondary" onclick="addCustomerFromUI()">+ Hinzufügen</button>
+            <div style="margin-bottom:14px">
+                <div style="display:flex;gap:8px;margin-bottom:6px">
+                    <input type="text" id="new-customer-input" placeholder="Kundenname…" style="flex:1;width:auto" onkeydown="if(event.key==='Enter')document.getElementById('new-customer-address').focus()">
+                    <button class="btn-secondary" onclick="addCustomerFromUI()">+ Hinzufügen</button>
+                </div>
+                <input type="text" id="new-customer-address" placeholder="Anschrift (z.B. Hauptstraße 1, 14641 Nauen)" style="font-size:13px" onkeydown="if(event.key==='Enter')addCustomerFromUI()">
             </div>
             <div id="customer-list-container"></div>
         </div>
@@ -332,34 +769,20 @@
 
     <!-- Filter -->
     <div class="card">
-        <div class="card-title">Filter & Suche</div>
+        <div class="card-title">Filter &amp; Suche</div>
         <div class="filter-grid">
-            <div>
-                <label>Kunde</label>
-                <select id="filter-customer" onchange="renderDashboard()"><option value="">Alle Kunden</option></select>
-            </div>
-            <div>
-                <label>Monat</label>
-                <select id="filter-month" onchange="onMonthChange()"><option value="">Alle Monate</option></select>
-            </div>
+            <div><label>Kunde</label><select id="filter-customer" onchange="renderDashboard()"><option value="">Alle Kunden</option></select></div>
+            <div><label>Monat</label><select id="filter-month" onchange="onMonthChange()"><option value="">Alle Monate</option></select></div>
             <div>
                 <label>Typ</label>
                 <select id="filter-type" onchange="renderDashboard()">
-                    <option value="">Alle</option>
-                    <option>Mitarbeiter</option>
-                    <option>Subunternehmer</option>
+                    <option value="">Alle</option><option>Mitarbeiter</option><option>Subunternehmer</option>
                 </select>
             </div>
             <div></div>
-            <div>
-                <label>Von Datum</label>
-                <input type="date" id="filter-from" onchange="onDateChange()">
-            </div>
-            <div>
-                <label>Bis Datum</label>
-                <input type="date" id="filter-to" onchange="onDateChange()">
-            </div>
-            <div class="full" style="display:flex;gap:8px;align-items:flex-end;margin-top:4px;">
+            <div><label>Von Datum</label><input type="date" id="filter-from" onchange="onDateChange()"></div>
+            <div><label>Bis Datum</label><input type="date" id="filter-to" onchange="onDateChange()"></div>
+            <div class="full" style="margin-top:4px">
                 <button class="btn-secondary" onclick="resetFilters()">✕ Filter zurücksetzen</button>
             </div>
         </div>
@@ -369,13 +792,11 @@
     <div class="card">
         <div class="section-header">
             <div class="card-title" style="margin:0">Stunden pro Kunde</div>
-            <button class="btn-secondary" onclick="exportCSV()">⬇ CSV Export</button>
+            <button class="btn-secondary" onclick="exportCSV()">⬇ CSV</button>
         </div>
         <div class="table-wrapper">
             <table>
-                <thead>
-                    <tr><th>Kunde</th><th>Einsätze</th><th>Gesamt-Std.</th><th>MA-Std.</th><th>Sub-Std.</th></tr>
-                </thead>
+                <thead><tr><th>Kunde</th><th>Anschrift</th><th>Einst.</th><th>Ges.-Std.</th><th>MA</th><th>Sub</th></tr></thead>
                 <tbody id="summary-tbody"></tbody>
             </table>
         </div>
@@ -385,244 +806,352 @@
     <div class="card">
         <div class="section-header">
             <div class="card-title" style="margin:0">Alle Einträge</div>
-            <span id="entry-count" style="font-size:12px;color:#718096"></span>
+            <span id="entry-count" style="font-size:12px;color:var(--gray-6)"></span>
         </div>
         <div class="table-wrapper">
             <table>
-                <thead>
-                    <tr><th>Datum</th><th>Name</th><th>Typ</th><th>Kunde</th><th>Von</th><th>Bis</th><th>Std.</th><th>Bemerkung</th><th></th></tr>
-                </thead>
+                <thead><tr><th>Datum</th><th>Name</th><th>Typ</th><th>Kunde</th><th>Von</th><th>Bis</th><th>Std.</th><th>Bemerkung</th><th></th></tr></thead>
                 <tbody id="entries-tbody"></tbody>
             </table>
         </div>
     </div>
-
     <br>
 </div>
 
 
 <script>
-// ── IN-MEMORY DATENSCHICHT ────────────────────────────────
+/* ────────────────────────────────────────────────
+   HILFSFUNKTIONEN
+──────────────────────────────────────────────── */
+function esc(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
+const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni',
+                   'Juli','August','September','Oktober','November','Dezember'];
+const DAYS_DE   = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+function fmtDate(s) {
+    const [y,m,d] = s.split('-'); return `${d}.${m}.${y}`;
+}
+function fmtDateLabel(s) {
+    const today     = new Date().toISOString().slice(0,10);
+    const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+    if (s === today)     return 'Heute';
+    if (s === yesterday) return 'Gestern';
+    const [y,m,d] = s.split('-');
+    const day = new Date(+y, +m-1, +d).getDay();
+    return `${DAYS_DE[day]}, ${d}.${m}.`;
+}
+function getBarClass(dateStr) {
+    const today     = new Date().toISOString().slice(0,10);
+    const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+    if (dateStr === today)     return 'bar-today';
+    if (dateStr === yesterday) return 'bar-yesterday';
+    const diff = (new Date(today) - new Date(dateStr)) / 86400000;
+    return diff <= 7 ? 'bar-recent' : 'bar-older';
+}
+function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
+
+/* ────────────────────────────────────────────────
+   DATENSCHICHT
+──────────────────────────────────────────────── */
 const DEFAULT_CUSTOMERS = [
-    'Hotel Zentrum Berlin','Bürogebäude Mitte GmbH','Einkaufszentrum West',
-    'Arztpraxis Dr. Meier','Schule Am Sonnenstein','Rathaus Hauptstraße'
+    { name: 'Arztpraxis Dr. Meier',             address: 'Hauptstraße 12, 14641 Nauen' },
+    { name: 'Bürogebäude Mitte GmbH',            address: 'Berliner Allee 5, 10117 Berlin' },
+    { name: 'Deutsche Bahn AG — Empfang',        address: 'Bahnhofsplatz 1, 14641 Nauen' },
+    { name: 'Einkaufszentrum West',              address: 'Westpromenade 20, 14641 Nauen' },
+    { name: 'Fitnessstudio FitPoint Nauen',      address: 'Sporthofstraße 3, 14641 Nauen' },
+    { name: 'Hotel Zentrum Berlin',              address: 'Unter den Linden 10, 10117 Berlin' },
+    { name: 'Kindergarten Sonnenschein',         address: 'Birkenweg 7, 14641 Nauen' },
+    { name: 'Klinik am Stadtrand',               address: 'Klinikstraße 2, 14641 Nauen' },
+    { name: 'Logistikzentrum Nord',              address: 'Gewerbepark 15, 14641 Nauen' },
+    { name: 'Notariat Schulz und Partner',       address: 'Rathausplatz 4, 14641 Nauen' },
+    { name: 'Pflegeheim Am Stadtpark',           address: 'Am Stadtpark 8, 14641 Nauen' },
+    { name: 'Rathaus Hauptstraße',               address: 'Hauptstraße 1, 14641 Nauen' },
+    { name: 'Schule Am Sonnenstein',             address: 'Schulweg 11, 14641 Nauen' },
+    { name: 'Sportzentrum Havelwelle',           address: 'Havelstraße 30, 14641 Nauen' },
+    { name: 'Supermarkt EDEKA Lange',            address: 'Einkaufsstraße 6, 14641 Nauen' },
+    { name: 'Tankstelle Shell Kreuzweg',         address: 'Kreuzweg 18, 14641 Nauen' },
+    { name: 'Verwaltungsgebäude Landkreis',      address: 'Kreisstraße 25, 14641 Nauen' },
+    { name: 'Zahnarztpraxis Wagner',             address: 'Lindenstraße 9, 14641 Nauen' },
+    { name: 'Zollamt Westhafen',                 address: 'Hafenstraße 1, 14641 Nauen' },
 ];
 
 let APP_DATA = { entries: [], customers: [] };
 
+function normalizeCustomers(list) {
+    if (!Array.isArray(list)) return [];
+    return list.map(c => typeof c === 'string' ? { name: c, address: '' } : c);
+}
 async function initData() {
-    try {
-        const res = await fetch('/api/data');
-        if (res.ok) APP_DATA = await res.json();
-    } catch(e) {}
-    if (!APP_DATA.customers || APP_DATA.customers.length === 0) {
-        APP_DATA.customers = [...DEFAULT_CUSTOMERS];
-    }
+    try { const r = await fetch('/api/data'); if (r.ok) APP_DATA = await r.json(); } catch(e) {}
+    if (APP_DATA.customers) APP_DATA.customers = normalizeCustomers(APP_DATA.customers);
+    if (!APP_DATA.customers || APP_DATA.customers.length === 0)
+        APP_DATA.customers = JSON.parse(JSON.stringify(DEFAULT_CUSTOMERS));
     document.getElementById('loading-screen').style.display = 'none';
     initUI();
 }
-
 function syncToServer() {
-    fetch('/api/data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(APP_DATA)
-    }).catch(() => {});
+    fetch('/api/data',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(APP_DATA) }).catch(()=>{});
 }
-
 function loadData()          { return APP_DATA.entries   || []; }
-function saveData(entries)   { APP_DATA.entries = entries;   syncToServer(); }
-function loadCustomers()     { return APP_DATA.customers || []; }
-function saveCustomers(list) { APP_DATA.customers = list;    syncToServer(); }
-
-function addCustomer(name) {
+function saveData(e)         { APP_DATA.entries = e;  syncToServer(); }
+function loadCustomers()     { return normalizeCustomers(APP_DATA.customers || []); }
+function saveCustomers(list) { APP_DATA.customers = list; syncToServer(); }
+function getCustomerObj(name)     { return loadCustomers().find(c=>c.name===name) || null; }
+function getCustomerAddress(name) { const c=getCustomerObj(name); return c?.address||''; }
+function addCustomer(name, address='') {
     const list = loadCustomers();
-    if (list.find(c => c.toLowerCase() === name.toLowerCase())) return false;
-    list.push(name);
-    list.sort((a, b) => a.localeCompare(b, 'de'));
-    saveCustomers(list);
-    return true;
+    if (list.find(c=>c.name.toLowerCase()===name.toLowerCase())) return false;
+    list.push({ name, address });
+    list.sort((a,b)=>a.name.localeCompare(b.name,'de'));
+    saveCustomers(list); return true;
 }
-function removeCustomer(name) {
-    saveCustomers(loadCustomers().filter(c => c !== name));
+function removeCustomer(name) { saveCustomers(loadCustomers().filter(c=>c.name!==name)); }
+function updateCustomerAddress(name, address) {
+    const list=loadCustomers(), idx=list.findIndex(c=>c.name===name);
+    if (idx!==-1){ list[idx].address=address; saveCustomers(list); }
 }
 
-// ── FORMULAR ─────────────────────────────────────────────
+/* ────────────────────────────────────────────────
+   ZEITAUSWAHL: 00:00 – 23:45, Viertelstunden
+──────────────────────────────────────────────── */
+function buildTimeSelects() {
+    ['f-from','f-to'].forEach(id => {
+        const sel = document.getElementById(id), cur = sel.value;
+        sel.innerHTML = '<option value="">— Uhrzeit —</option>';
+        for (let h=0; h<=23; h++) for (const m of [0,15,30,45]) {
+            const val = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+            const opt = document.createElement('option');
+            opt.value = val; opt.textContent = `${val} Uhr`;
+            sel.appendChild(opt);
+        }
+        if (cur) sel.value = cur;
+    });
+}
 
+/* ────────────────────────────────────────────────
+   FORMULAR
+──────────────────────────────────────────────── */
 let editingId = null;
 
 function populateFormCustomers() {
-    const sel = document.getElementById('f-customer');
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">— Kunde auswählen —</option>';
-    loadCustomers().forEach(c => {
-        const o = document.createElement('option');
-        o.value = c; o.textContent = c;
-        sel.appendChild(o);
+    const sel=document.getElementById('f-customer'), cur=sel.value;
+    sel.innerHTML='<option value="">— Kunde auswählen —</option>';
+    loadCustomers().forEach(c=>{
+        const o=document.createElement('option'); o.value=c.name; o.textContent=c.name; sel.appendChild(o);
     });
-    if (cur) sel.value = cur;
+    if (cur) sel.value=cur;
+    onCustomerChange();
 }
-
+function onCustomerChange() {
+    const name=document.getElementById('f-customer').value;
+    const hint=document.getElementById('customer-address-hint');
+    const addr=getCustomerAddress(name);
+    if (name && addr){ document.getElementById('customer-address-text').textContent=addr; hint.style.display='block'; }
+    else hint.style.display='none';
+}
 function quickAddCustomer() {
-    const name = prompt('Name des neuen Kunden:');
-    if (!name || !name.trim()) return;
-    if (!addCustomer(name.trim())) { alert('Dieser Kunde ist bereits vorhanden.'); return; }
+    const name=prompt('Name des neuen Kunden:'); if (!name||!name.trim()) return;
+    const address=prompt('Anschrift (oder leer lassen):')||'';
+    if (!addCustomer(name.trim(),address.trim())) { alert('Dieser Kunde ist bereits vorhanden.'); return; }
     populateFormCustomers();
-    document.getElementById('f-customer').value = name.trim();
-    if (document.getElementById('kunden-body').style.display !== 'none') renderCustomerList();
+    document.getElementById('f-customer').value=name.trim(); onCustomerChange();
+    if (document.getElementById('kunden-body').style.display!=='none') renderCustomerList();
 }
-
-function setType(type, btn) {
-    document.getElementById('f-type').value = type;
-    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-}
-
-function setTypeByValue(type) {
-    document.getElementById('f-type').value = type;
-    document.getElementById('toggle-ma').classList.toggle('active', type === 'Mitarbeiter');
-    document.getElementById('toggle-sub').classList.toggle('active', type === 'Subunternehmer');
-}
-
-function calcDuration() {
-    const from = document.getElementById('f-from').value;
-    const to   = document.getElementById('f-to').value;
-    const disp = document.getElementById('duration-display');
-    if (!from || !to) { disp.textContent = '—'; disp.style.color = '#0284c7'; return; }
-    const mins = toMins(to) - toMins(from);
-    if (mins <= 0) { disp.textContent = 'Fehler'; disp.style.color = '#e53e3e'; return; }
-    disp.style.color = '#0284c7';
-    const h = Math.floor(mins / 60), m = mins % 60;
-    disp.textContent = m > 0 ? `${h}h ${m}m` : `${h}h`;
-}
-
-function toMins(t) {
-    const [h, m] = t.split(':').map(Number);
-    return h * 60 + m;
-}
-
 function onNameChange() {
     if (editingId) cancelEdit();
-    renderMyEntries(document.getElementById('f-name').value);
+    const sel=document.getElementById('f-name');
+    const opt=sel.options[sel.selectedIndex];
+    const type = (opt?.parentElement?.tagName==='OPTGROUP' && opt.parentElement.label==='Subunternehmer')
+        ? 'Subunternehmer' : 'Mitarbeiter';
+    document.getElementById('f-type').value = type;
+    const name = sel.value;
+    updateWelcomeCard(name, type);
+    renderHistory(name);
 }
-
+function calcDuration() {
+    const from=document.getElementById('f-from').value, to=document.getElementById('f-to').value;
+    const disp=document.getElementById('duration-display');
+    if (!from||!to){ disp.textContent='—'; disp.style.color='var(--blue)'; return; }
+    const mins=toMins(to)-toMins(from);
+    if (mins<=0){ disp.textContent='Fehler'; disp.style.color='var(--red)'; return; }
+    disp.style.color='var(--blue)';
+    const h=Math.floor(mins/60), m=mins%60;
+    disp.textContent = m>0 ? `${h}h ${m}m` : `${h}h`;
+}
 function submitEntry() {
-    const name     = document.getElementById('f-name').value.trim();
-    const type     = document.getElementById('f-type').value;
-    const customer = document.getElementById('f-customer').value;
-    const date     = document.getElementById('f-date').value;
-    const from     = document.getElementById('f-from').value;
-    const to       = document.getElementById('f-to').value;
-    const note     = document.getElementById('f-note').value.trim();
-
-    if (!name || !customer || !date || !from || !to) {
-        alert('Bitte alle Pflichtfelder (*) ausfüllen.');
-        return;
-    }
-    const mins = toMins(to) - toMins(from);
-    if (mins <= 0) { alert('"Bis"-Zeit muss nach "Von"-Zeit liegen.'); return; }
-
-    const hours   = Math.round(mins / 60 * 100) / 100;
-    const entries = loadData();
-    let savedId;
-
+    const name=document.getElementById('f-name').value.trim();
+    const type=document.getElementById('f-type').value;
+    const customer=document.getElementById('f-customer').value;
+    const date=document.getElementById('f-date').value;
+    const from=document.getElementById('f-from').value;
+    const to=document.getElementById('f-to').value;
+    const note=document.getElementById('f-note').value.trim();
+    if (!name||!customer||!date||!from||!to){ alert('Bitte alle Pflichtfelder (*) ausfüllen.'); return; }
+    const mins=toMins(to)-toMins(from);
+    if (mins<=0){ alert('"Bis"-Zeit muss nach "Von"-Zeit liegen.'); return; }
+    const hours=Math.round(mins/60*100)/100;
+    const entries=loadData(); let savedId;
     if (editingId) {
-        const idx = entries.findIndex(e => e.id === editingId);
-        if (idx !== -1) entries[idx] = { ...entries[idx], name, type, customer, date, from, to, hours, note };
-        savedId   = editingId;
-        editingId = null;
-        document.getElementById('edit-indicator').style.display = 'none';
-        document.getElementById('submit-btn').textContent = '✓ Eintrag speichern';
+        const idx=entries.findIndex(e=>e.id===editingId);
+        if (idx!==-1) entries[idx]={...entries[idx],name,type,customer,date,from,to,hours,note};
+        savedId=editingId; editingId=null;
+        document.getElementById('edit-indicator').style.display='none';
+        document.getElementById('submit-btn').textContent='✓ Eintrag speichern';
+        document.getElementById('submit-btn').classList.remove('editing-mode');
+        document.getElementById('emp-divider-label').textContent='+ Neuer Eintrag';
     } else {
-        savedId = Date.now();
-        entries.push({ id: savedId, name, type, customer, date, from, to, hours, note });
+        savedId=Date.now();
+        entries.push({id:savedId,name,type,customer,date,from,to,hours,note});
     }
     saveData(entries);
-
-    ['f-customer','f-from','f-to','f-note'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('duration-display').textContent = '—';
-
-    const msg = document.getElementById('success-msg');
-    msg.innerHTML = `✅ Eintrag übermittelt — im Büro sofort sichtbar!<br>
-        <button class="btn-secondary" style="margin-top:10px;font-size:12px" onclick="showRapport(${savedId})">📋 Rapportzettel anzeigen / drucken</button>`;
-    msg.style.display = 'block';
-    setTimeout(() => msg.style.display = 'none', 7000);
-
-    renderMyEntries(name);
+    ['f-customer','f-from','f-to','f-note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+    document.getElementById('duration-display').textContent='—';
+    document.getElementById('customer-address-hint').style.display='none';
+    // History sofort aktualisieren — neuer Eintrag springt an erste Stelle
+    renderHistory(name);
+    // Zur History scrollen
+    const histSec=document.getElementById('emp-history-section');
+    if (histSec.style.display!=='none') setTimeout(()=>histSec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+    // Erfolgsmeldung
+    const msg=document.getElementById('success-msg');
+    msg.innerHTML=`✅ Eintrag gespeichert &amp; im Büro sichtbar!<br>
+        <button class="emp-success-rapport" onclick="showRapport(${savedId})">📋 Rapportzettel öffnen</button>`;
+    msg.style.display='block';
+    setTimeout(()=>msg.style.display='none', 6000);
 }
 
-// ── MEINE EINTRÄGE ────────────────────────────────────────
+/* ────────────────────────────────────────────────
+   WELCOME CARD
+──────────────────────────────────────────────── */
+function updateWelcomeCard(name, type) {
+    const welcome=document.getElementById('emp-welcome');
+    if (!name){ welcome.style.display='none'; return; }
+    welcome.style.display='flex';
+    // Vorname
+    document.getElementById('emp-first-name').textContent = name.split(' ')[0];
+    // Typ-Pill
+    const pill=document.getElementById('emp-type-pill');
+    if (type==='Subunternehmer'){
+        pill.textContent='Sub'; pill.className='emp-type-pill sub-type';
+    } else {
+        pill.textContent='MA'; pill.className='emp-type-pill';
+    }
+    // Woche-Stats
+    const now=new Date();
+    const monday=new Date(now); monday.setDate(now.getDate()-((now.getDay()+6)%7)); monday.setHours(0,0,0,0);
+    const weekStr=monday.toISOString().slice(0,10);
+    const weekEntries=loadData().filter(e=>e.name===name&&e.date>=weekStr);
+    const weekH=weekEntries.reduce((s,e)=>s+e.hours,0);
+    const monthStr=now.toISOString().slice(0,7);
+    const monthH=loadData().filter(e=>e.name===name&&e.date.startsWith(monthStr)).reduce((s,e)=>s+e.hours,0);
+    document.getElementById('emp-welcome-stats').textContent=
+        `${weekEntries.length} Einträge diese Woche · ${weekH.toFixed(1)} Std.  |  ${monthH.toFixed(1)} Std. im ${MONTHS_DE[now.getMonth()]}`;
+}
 
-function renderMyEntries(name) {
-    const sec = document.getElementById('my-entries-section');
-    if (!name) { sec.style.display = 'none'; return; }
-
-    const entries = loadData()
-        .filter(e => e.name === name)
-        .sort((a, b) => b.date.localeCompare(a.date) || b.from.localeCompare(a.from))
-        .slice(0, 3);
-
-    if (entries.length === 0) { sec.style.display = 'none'; return; }
-
-    sec.style.display = 'block';
-    document.getElementById('my-entries-list').innerHTML = entries.map(e => `
-        <div class="my-entry-item">
-            <div class="my-entry-info">
-                <div class="my-entry-main">${fmtDate(e.date)} — ${e.customer}</div>
-                <div class="my-entry-sub">${e.from}–${e.to} Uhr &nbsp;·&nbsp; ${e.hours.toFixed(1)} Std.${e.note ? ' &nbsp;·&nbsp; ' + e.note : ''}</div>
+/* ────────────────────────────────────────────────
+   VERLAUF — LETZTE 7 ECHTE EINTRÄGE
+──────────────────────────────────────────────── */
+function renderHistory(name) {
+    const sec=document.getElementById('emp-history-section');
+    if (!name){ sec.style.display='none'; return; }
+    const entries=loadData()
+        .filter(e=>e.name===name)
+        .sort((a,b)=>b.date.localeCompare(a.date)||b.from.localeCompare(a.from))
+        .slice(0,7);
+    if (entries.length===0){ sec.style.display='none'; return; }
+    sec.style.display='block';
+    document.getElementById('emp-history-count').textContent=`${entries.length} von ${loadData().filter(e=>e.name===name).length}`;
+    document.getElementById('emp-history-list').innerHTML = entries.map(e => {
+        const addr   = getCustomerAddress(e.customer);
+        const barCls = getBarClass(e.date);
+        const h      = e.hours;
+        const hColor = h<4 ? '#059669' : h>8 ? '#d97706' : '#0284c7';
+        const hBg    = h<4 ? '#f0fdf4' : h>8 ? '#fffbeb' : '#f0f9ff';
+        const hBorder= h<4 ? '#6ee7b7' : h>8 ? '#fcd34d' : '#bae6fd';
+        const signed = e.sigCustomer||e.sigEmployee;
+        return `
+        <div class="emp-entry-card">
+            <div class="emp-entry-bar ${barCls}"></div>
+            <div class="emp-entry-body">
+                <div class="emp-entry-header">
+                    <span class="emp-entry-date-label">${fmtDateLabel(e.date)}</span>
+                    <span class="emp-hours-pill" style="color:${hColor};background:${hBg};border-color:${hBorder}">${Number.isInteger(h*10)&&h%1===0?h.toFixed(0):h.toFixed(1)} h</span>
+                </div>
+                <div class="emp-entry-customer">${esc(e.customer)}</div>
+                ${addr?`<div class="emp-entry-addr">📍 ${esc(addr)}</div>`:''}
+                <div class="emp-entry-time">
+                    ${esc(e.from)} – ${esc(e.to)} Uhr
+                    ${signed?' &nbsp;·&nbsp; <span class="emp-signed-chip">✓ unterschrieben</span>':''}
+                </div>
+                ${e.note?`<div class="emp-entry-note">"${esc(e.note)}"</div>`:''}
+                <div class="emp-entry-actions">
+                    <button class="emp-btn-rapport" onclick="showRapport(${e.id})">📋 Rapport</button>
+                    <button class="emp-btn-edit"    onclick="startEdit(${e.id})">✏ Bearbeiten</button>
+                    <button class="emp-btn-delete"  onclick="deleteMyEntry(${e.id})">✕</button>
+                </div>
             </div>
-            <div class="my-entry-actions">
-                <button class="btn-secondary" style="padding:4px 10px;font-size:11px" onclick="startEdit(${e.id})">✏</button>
-                <button class="btn-rapport-sm" onclick="showRapport(${e.id})">📋</button>
-                <button class="btn-danger-sm" onclick="deleteMyEntry(${e.id})">✕</button>
-            </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function startEdit(id) {
-    const entry = loadData().find(e => e.id === id);
-    if (!entry) return;
-    editingId = id;
-    document.getElementById('f-name').value     = entry.name;
-    document.getElementById('f-customer').value = entry.customer;
-    document.getElementById('f-date').value     = entry.date;
-    document.getElementById('f-from').value     = entry.from;
-    document.getElementById('f-to').value       = entry.to;
-    document.getElementById('f-note').value     = entry.note || '';
-    setTypeByValue(entry.type);
-    calcDuration();
-    document.getElementById('edit-indicator-text').textContent = `✏ Bearbeitung: ${fmtDate(entry.date)} — ${entry.customer}`;
-    document.getElementById('edit-indicator').style.display = 'flex';
-    document.getElementById('submit-btn').textContent = '✓ Änderung speichern';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const entry=loadData().find(e=>e.id===id); if (!entry) return;
+    editingId=id;
+    document.getElementById('f-name').value    =entry.name;
+    document.getElementById('f-type').value    =entry.type||'Mitarbeiter';
+    document.getElementById('f-customer').value=entry.customer;
+    document.getElementById('f-date').value    =entry.date;
+    document.getElementById('f-from').value    =entry.from;
+    document.getElementById('f-to').value      =entry.to;
+    document.getElementById('f-note').value    =entry.note||'';
+    calcDuration(); onCustomerChange();
+    document.getElementById('edit-indicator-text').textContent=`✏ Bearbeitung: ${fmtDate(entry.date)} — ${entry.customer}`;
+    document.getElementById('edit-indicator').style.display='flex';
+    document.getElementById('submit-btn').textContent='✓ Änderung speichern';
+    document.getElementById('submit-btn').classList.add('editing-mode');
+    document.getElementById('emp-divider-label').textContent='Eintrag bearbeiten';
+    // Zum Formular scrollen
+    setTimeout(()=>document.getElementById('emp-form-divider').scrollIntoView({behavior:'smooth',block:'start'}),80);
 }
-
 function cancelEdit() {
-    editingId = null;
-    document.getElementById('edit-indicator').style.display = 'none';
-    document.getElementById('submit-btn').textContent = '✓ Eintrag speichern';
-    ['f-customer','f-from','f-to','f-note'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('duration-display').textContent = '—';
+    editingId=null;
+    document.getElementById('edit-indicator').style.display='none';
+    document.getElementById('submit-btn').textContent='✓ Eintrag speichern';
+    document.getElementById('submit-btn').classList.remove('editing-mode');
+    document.getElementById('emp-divider-label').textContent='+ Neuer Eintrag';
+    ['f-customer','f-from','f-to','f-note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+    document.getElementById('duration-display').textContent='—';
+    document.getElementById('customer-address-hint').style.display='none';
 }
-
 function deleteMyEntry(id) {
     if (!confirm('Diesen Eintrag löschen?')) return;
-    if (editingId === id) cancelEdit();
-    saveData(loadData().filter(e => e.id !== id));
-    renderMyEntries(document.getElementById('f-name').value);
+    if (editingId===id) cancelEdit();
+    saveData(loadData().filter(e=>e.id!==id));
+    renderHistory(document.getElementById('f-name').value);
 }
 
-// ── RAPPORTZETTEL ─────────────────────────────────────────
+/* ────────────────────────────────────────────────
+   RAPPORTZETTEL
+──────────────────────────────────────────────── */
+let currentRapportId=null;
 
 function showRapport(id) {
-    const entry = loadData().find(e => e.id === id);
-    if (!entry) return;
-
-    document.getElementById('rapport-content').innerHTML = `
+    currentRapportId=id;
+    const entry=loadData().find(e=>e.id===id); if (!entry) return;
+    const addr=getCustomerAddress(entry.customer);
+    const mkSig=(stored,target)=>stored
+        ?`<img src="${stored}" class="sig-captured">
+          <div class="sig-ok">✓ Unterschrift erfasst</div>
+          <button class="btn-sign" style="font-size:11px;padding:5px;margin-top:4px" onclick="openSig('${target}')">🔄 Neu</button>`
+        :`<div class="rapport-sig-line"></div>
+          <button class="btn-sign" onclick="openSig('${target}')">✍ ${target==='customer'?'Kunde':'Reinigungskraft'} unterschreiben</button>`;
+    document.getElementById('rapport-content').innerHTML=`
         <div class="rapport-page">
             <div class="rapport-top">
                 <div>
@@ -634,388 +1163,334 @@ function showRapport(id) {
             </div>
             <hr class="rapport-divider">
             <table class="rapport-table">
-                <tr><td class="rapport-key">Kunde / Objekt:</td><td class="rapport-val"><strong>${entry.customer}</strong></td></tr>
+                <tr><td class="rapport-key">Kunde / Objekt:</td><td class="rapport-val"><strong>${esc(entry.customer)}</strong></td></tr>
+                ${addr?`<tr><td class="rapport-key">Anschrift:</td><td class="rapport-val">${esc(addr)}</td></tr>`:''}
                 <tr><td class="rapport-key">Datum:</td><td class="rapport-val"><strong>${fmtDate(entry.date)}</strong></td></tr>
-                <tr><td class="rapport-key">Ausgeführt von:</td><td class="rapport-val">${entry.name}</td></tr>
-                <tr><td class="rapport-key">Arbeitszeit:</td><td class="rapport-val">${entry.from} – ${entry.to} Uhr</td></tr>
+                <tr><td class="rapport-key">Ausgeführt von:</td><td class="rapport-val">${esc(entry.name)}</td></tr>
+                <tr><td class="rapport-key">Arbeitszeit:</td><td class="rapport-val">${esc(entry.from)} – ${esc(entry.to)} Uhr</td></tr>
                 <tr><td class="rapport-key">Dauer:</td><td class="rapport-val"><strong>${entry.hours.toFixed(1)} Stunden</strong></td></tr>
-                ${entry.note ? `<tr><td class="rapport-key">Bemerkung:</td><td class="rapport-val">${entry.note}</td></tr>` : ''}
+                ${entry.note?`<tr><td class="rapport-key">Bemerkung:</td><td class="rapport-val">${esc(entry.note)}</td></tr>`:''}
             </table>
             <hr class="rapport-divider">
-            <div class="rapport-notice">
-                Hiermit wird bestätigt, dass die oben aufgeführten Reinigungsarbeiten
-                ordnungsgemäß und vollständig ausgeführt wurden.
-            </div>
+            <div class="rapport-notice">Hiermit wird bestätigt, dass die oben aufgeführten Reinigungsarbeiten ordnungsgemäß und vollständig ausgeführt wurden.</div>
             <div class="rapport-sigs">
-                <div class="rapport-sig">
-                    <div id="sig-customer"><div class="rapport-sig-line"></div></div>
-                    <button class="btn-sign" onclick="openSig('customer')">✍ Kunde unterschreiben lassen</button>
-                    <div class="rapport-sig-label" style="margin-top:6px">Unterschrift Auftraggeber</div>
-                </div>
-                <div class="rapport-sig">
-                    <div id="sig-employee"><div class="rapport-sig-line"></div></div>
-                    <button class="btn-sign" onclick="openSig('employee')">✍ Reinigungskraft unterschreiben</button>
-                    <div class="rapport-sig-label" style="margin-top:6px">Unterschrift Reinigungskraft</div>
+                <div class="rapport-sig"><div id="sig-customer">${mkSig(entry.sigCustomer,'customer')}</div><div class="rapport-sig-label" style="margin-top:6px">Unterschrift Auftraggeber</div></div>
+                <div class="rapport-sig"><div id="sig-employee">${mkSig(entry.sigEmployee,'employee')}</div><div class="rapport-sig-label" style="margin-top:6px">Unterschrift Reinigungskraft</div></div>
+            </div>
+        </div>`;
+    document.getElementById('rapport-overlay').style.display='block';
+    document.body.style.overflow='hidden';
+}
+function closeRapport() {
+    document.getElementById('rapport-overlay').style.display='none';
+    document.body.style.overflow=''; currentRapportId=null;
+}
+
+/* ────────────────────────────────────────────────
+   UNTERSCHRIFT-PAD
+──────────────────────────────────────────────── */
+let sigTarget=null;
+function openSig(target) {
+    sigTarget=target;
+    const canvas=document.getElementById('sig-canvas');
+    const maxW=Math.min(window.innerWidth-40,560);
+    canvas.width=maxW; canvas.height=Math.round(maxW*.32);
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.save(); ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    const y=canvas.height*.72;
+    ctx.beginPath(); ctx.moveTo(20,y); ctx.lineTo(canvas.width-20,y); ctx.stroke(); ctx.restore();
+    document.getElementById('sig-overlay').style.display='flex';
+}
+function clearSig() {
+    const canvas=document.getElementById('sig-canvas'), ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    const y=canvas.height*.72; ctx.beginPath(); ctx.moveTo(20,y); ctx.lineTo(canvas.width-20,y); ctx.stroke();
+}
+function cancelSig() { document.getElementById('sig-overlay').style.display='none'; sigTarget=null; }
+function confirmSig() {
+    const canvas=document.getElementById('sig-canvas');
+    const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+    if (!Array.from(data).some((v,i)=>i%4===3&&v>0)){ alert('Bitte zuerst unterschreiben.'); return; }
+    const dataUrl=canvas.toDataURL('image/png');
+    const targetEl=document.getElementById(sigTarget==='customer'?'sig-customer':'sig-employee');
+    const capturedTarget=sigTarget;
+    if (targetEl) targetEl.innerHTML=`<img src="${dataUrl}" class="sig-captured">
+        <div class="sig-ok">✓ Unterschrift erfasst</div>
+        <button class="btn-sign" style="font-size:11px;padding:5px;margin-top:4px" onclick="openSig('${capturedTarget}')">🔄 Neu</button>`;
+    if (currentRapportId) {
+        const entries=loadData(), idx=entries.findIndex(e=>e.id===currentRapportId);
+        if (idx!==-1){ if (sigTarget==='customer') entries[idx].sigCustomer=dataUrl; else entries[idx].sigEmployee=dataUrl; saveData(entries); }
+    }
+    document.getElementById('sig-overlay').style.display='none'; sigTarget=null;
+    // OK-Banner am Ende des Rapportzettel einblenden
+    showRapportOkBanner();
+}
+function showRapportOkBanner() {
+    const existing=document.getElementById('rapport-ok-section');
+    if (existing) existing.remove();
+    const page=document.querySelector('.rapport-page');
+    if (!page) return;
+    const banner=document.createElement('div');
+    banner.id='rapport-ok-section';
+    banner.style.marginTop='24px';
+    banner.innerHTML=`
+        <div style="background:#f0fdf4;border:1.5px solid #6ee7b7;border-radius:12px;
+                    padding:14px 18px;margin-bottom:12px;font-size:14px;font-weight:600;
+                    color:#059669;text-align:center;">
+            ✓ Unterschrift erfasst und gespeichert
+        </div>
+        <button onclick="closeRapport()"
+                style="width:100%;padding:16px;background:linear-gradient(135deg,#059669,#10b981);
+                       color:white;border:none;border-radius:14px;font-size:17px;font-weight:800;
+                       cursor:pointer;box-shadow:0 4px 16px rgba(16,185,129,.35);letter-spacing:.1px;">
+            OK — Fertig
+        </button>`;
+    page.appendChild(banner);
+    setTimeout(()=>banner.scrollIntoView({behavior:'smooth', block:'nearest'}), 80);
+}
+function initSigCanvas() {
+    const canvas=document.getElementById('sig-canvas'), ctx=canvas.getContext('2d');
+    let drawing=false;
+    const pos=e=>{ const r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return {x:s.clientX-r.left,y:s.clientY-r.top}; };
+    const start=e=>{ e.preventDefault(); drawing=true; ctx.setLineDash([]); ctx.strokeStyle='#1a202c'; ctx.lineWidth=2.5; ctx.lineCap='round'; const {x,y}=pos(e); ctx.beginPath(); ctx.moveTo(x,y); };
+    const move =e=>{ e.preventDefault(); if (!drawing) return; const {x,y}=pos(e); ctx.lineTo(x,y); ctx.stroke(); };
+    const stop =()=>drawing=false;
+    canvas.addEventListener('touchstart',start,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false});
+    canvas.addEventListener('touchend',stop); canvas.addEventListener('mousedown',start);
+    canvas.addEventListener('mousemove',move); canvas.addEventListener('mouseup',stop); canvas.addEventListener('mouseleave',stop);
+}
+
+/* ────────────────────────────────────────────────
+   BÜRO: SIGNED RAPPORTS
+──────────────────────────────────────────────── */
+function toggleSignedRapports() {
+    const body=document.getElementById('signed-rapports-body'), icon=document.getElementById('signed-toggle-icon');
+    const open=body.style.display!=='none';
+    body.style.display=open?'none':'block'; icon.textContent=open?'▶ Ausklappen':'▼ Einklappen';
+}
+function renderSignedRapports() {
+    const c=document.getElementById('signed-rapports-container'); if (!c) return;
+    const signed=loadData().filter(e=>e.sigCustomer||e.sigEmployee).sort((a,b)=>b.date.localeCompare(a.date)||b.from.localeCompare(a.from));
+    const badge=document.getElementById('signed-count-badge');
+    badge.textContent=signed.length; badge.style.display=signed.length?'':'none';
+    if (!signed.length){ c.innerHTML='<div class="no-data">Noch keine unterschriebenen Rapportzettel.</div>'; return; }
+    c.innerHTML=signed.map(e=>{
+        const c1=e.sigCustomer?'<span class="badge-signed">✅ Kunde</span>':'<span style="font-size:11px;color:#a0aec0">⬜ Kunde</span>';
+        const c2=e.sigEmployee?'<span class="badge-signed">✅ Mitarbeiter</span>':'<span style="font-size:11px;color:#a0aec0">⬜ Mitarbeiter</span>';
+        const addr=getCustomerAddress(e.customer);
+        return `<div class="signed-rapport-item">
+            <div class="signed-rapport-info">
+                <div class="signed-rapport-main">${fmtDate(e.date)} — <strong>${esc(e.customer)}</strong></div>
+                <div class="signed-rapport-sub">
+                    <span>${esc(e.name)}</span><span style="color:#cbd5e0">·</span>
+                    <span>${esc(e.from)}–${esc(e.to)} Uhr</span>
+                    ${addr?`<span style="color:#cbd5e0">·</span><span>📍 ${esc(addr)}</span>`:''}
+                    <span style="color:#cbd5e0">·</span>${c1} ${c2}
                 </div>
             </div>
-        </div>
-    `;
-
-    document.getElementById('rapport-overlay').style.display = 'block';
-    document.body.style.overflow = 'hidden';
+            <div class="signed-rapport-actions">
+                <button class="btn-rapport-sm" onclick="showRapport(${e.id})">📋 Anzeigen</button>
+            </div>
+        </div>`;
+    }).join('');
 }
 
-function closeRapport() {
-    document.getElementById('rapport-overlay').style.display = 'none';
-    document.body.style.overflow = '';
-}
-
-// ── UNTERSCHRIFT-PAD ─────────────────────────────────────
-
-let sigTarget = null;
-
-function openSig(target) {
-    sigTarget = target;
-    const overlay = document.getElementById('sig-overlay');
-    const canvas  = document.getElementById('sig-canvas');
-    const maxW    = Math.min(window.innerWidth - 40, 560);
-    canvas.width  = maxW;
-    canvas.height = Math.round(maxW * 0.32);
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#1a202c';
-    ctx.lineWidth   = 2.5;
-    ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
-    ctx.save();
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth   = 1;
-    ctx.setLineDash([4, 4]);
-    const y = canvas.height * 0.72;
-    ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(canvas.width - 20, y); ctx.stroke();
-    ctx.restore();
-    overlay.style.display = 'flex';
-}
-
-function clearSig() {
-    const canvas = document.getElementById('sig-canvas');
-    const ctx    = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth   = 1;
-    ctx.setLineDash([4, 4]);
-    const y = canvas.height * 0.72;
-    ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(canvas.width - 20, y); ctx.stroke();
-    ctx.strokeStyle = '#1a202c';
-    ctx.lineWidth   = 2.5;
-    ctx.setLineDash([]);
-}
-
-function cancelSig() {
-    document.getElementById('sig-overlay').style.display = 'none';
-    sigTarget = null;
-}
-
-function confirmSig() {
-    const canvas = document.getElementById('sig-canvas');
-    const data   = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
-    if (!Array.from(data).some((v, i) => i % 4 === 3 && v > 0)) {
-        alert('Bitte zuerst unterschreiben.');
-        return;
-    }
-    const dataUrl  = canvas.toDataURL('image/png');
-    const targetEl = document.getElementById(sigTarget === 'customer' ? 'sig-customer' : 'sig-employee');
-    if (targetEl) {
-        targetEl.innerHTML = `<img src="${dataUrl}" class="sig-captured"><div class="sig-ok">✓ Unterschrift erfasst</div>`;
-    }
-    document.getElementById('sig-overlay').style.display = 'none';
-    sigTarget = null;
-}
-
-function initSigCanvas() {
-    const canvas = document.getElementById('sig-canvas');
-    const ctx    = canvas.getContext('2d');
-    let drawing  = false;
-
-    function pos(e) {
-        const r = canvas.getBoundingClientRect();
-        const s = e.touches ? e.touches[0] : e;
-        return { x: s.clientX - r.left, y: s.clientY - r.top };
-    }
-    function start(e) {
-        e.preventDefault();
-        drawing = true;
-        ctx.setLineDash([]);
-        ctx.strokeStyle = '#1a202c';
-        ctx.lineWidth   = 2.5;
-        const { x, y } = pos(e);
-        ctx.beginPath(); ctx.moveTo(x, y);
-    }
-    function move(e) {
-        e.preventDefault();
-        if (!drawing) return;
-        const { x, y } = pos(e);
-        ctx.lineTo(x, y); ctx.stroke();
-    }
-    function stop() { drawing = false; }
-
-    canvas.addEventListener('touchstart',  start, { passive: false });
-    canvas.addEventListener('touchmove',   move,  { passive: false });
-    canvas.addEventListener('touchend',    stop);
-    canvas.addEventListener('mousedown',   start);
-    canvas.addEventListener('mousemove',   move);
-    canvas.addEventListener('mouseup',     stop);
-    canvas.addEventListener('mouseleave',  stop);
-}
-
-// ── KUNDENVERWALTUNG ──────────────────────────────────────
-
+/* ────────────────────────────────────────────────
+   BÜRO: KUNDENVERWALTUNG
+──────────────────────────────────────────────── */
 function toggleKunden() {
-    const body = document.getElementById('kunden-body');
-    const icon = document.getElementById('kunden-toggle-icon');
-    const open = body.style.display === 'none';
-    body.style.display = open ? 'block' : 'none';
-    icon.textContent   = open ? '▼ Einklappen' : '▶ Ausklappen';
+    const body=document.getElementById('kunden-body'), icon=document.getElementById('kunden-toggle-icon');
+    const open=body.style.display==='none';
+    body.style.display=open?'block':'none'; icon.textContent=open?'▼ Einklappen':'▶ Ausklappen';
     if (open) renderCustomerList();
 }
-
 function renderCustomerList() {
-    const container = document.getElementById('customer-list-container');
-    const customers  = loadCustomers();
-    if (customers.length === 0) {
-        container.innerHTML = '<div class="no-data">Noch keine Kunden angelegt.</div>';
-        return;
-    }
-    container.innerHTML = customers.map(c => `
+    const ct=document.getElementById('customer-list-container'), custs=loadCustomers();
+    if (!custs.length){ ct.innerHTML='<div class="no-data">Noch keine Kunden angelegt.</div>'; return; }
+    ct.innerHTML=custs.map(c=>`
         <div class="kunden-item">
-            <span>${c}</span>
-            <button class="btn-danger-sm" onclick="removeCustomerFromUI(${JSON.stringify(c)})">✕ Entfernen</button>
-        </div>
-    `).join('');
+            <div class="kunden-item-top">
+                <span class="kunden-item-name">${esc(c.name)}</span>
+                <div class="kunden-item-btns">
+                    <button class="btn-edit-sm" onclick="editCustomerAddress(${JSON.stringify(c.name)})">✏ Adresse</button>
+                    <button class="btn-danger-sm" onclick="removeCustomerFromUI(${JSON.stringify(c.name)})">✕</button>
+                </div>
+            </div>
+            <div class="kunden-item-addr">${c.address?`📍 ${esc(c.address)}`:'<span style="color:#cbd5e0;font-style:italic">Keine Anschrift</span>'}</div>
+        </div>`).join('');
 }
-
 function addCustomerFromUI() {
-    const input = document.getElementById('new-customer-input');
-    const name  = input.value.trim();
-    if (!name) return;
-    if (!addCustomer(name)) { alert('Dieser Kunde ist bereits vorhanden.'); return; }
-    input.value = '';
-    renderCustomerList();
-    populateCustomerFilter();
-    populateFormCustomers();
+    const ni=document.getElementById('new-customer-input'), ai=document.getElementById('new-customer-address');
+    const name=ni.value.trim(); if (!name) return;
+    if (!addCustomer(name,ai.value.trim())){ alert('Bereits vorhanden.'); return; }
+    ni.value=''; ai.value=''; renderCustomerList(); populateCustomerFilter(); populateFormCustomers();
 }
-
 function removeCustomerFromUI(name) {
-    if (!confirm(`Kunde "${name}" aus der Liste entfernen?`)) return;
-    removeCustomer(name);
-    renderCustomerList();
-    populateCustomerFilter();
-    populateFormCustomers();
+    if (!confirm(`"${name}" entfernen?`)) return;
+    removeCustomer(name); renderCustomerList(); populateCustomerFilter(); populateFormCustomers();
+}
+function editCustomerAddress(name) {
+    const addr=getCustomerAddress(name);
+    const newAddr=prompt(`Anschrift für "${name}":`,addr); if (newAddr===null) return;
+    updateCustomerAddress(name,newAddr.trim()); renderCustomerList();
+    if (document.getElementById('f-customer').value===name) onCustomerChange();
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────
-
+/* ────────────────────────────────────────────────
+   BÜRO: DASHBOARD
+──────────────────────────────────────────────── */
 function getFilteredEntries() {
-    let entries = loadData();
-    const fc  = document.getElementById('filter-customer').value;
-    const ft  = document.getElementById('filter-type').value;
-    const ff  = document.getElementById('filter-from').value;
-    const ft2 = document.getElementById('filter-to').value;
-    if (fc)  entries = entries.filter(e => e.customer === fc);
-    if (ft)  entries = entries.filter(e => e.type === ft);
-    if (ff)  entries = entries.filter(e => e.date >= ff);
-    if (ft2) entries = entries.filter(e => e.date <= ft2);
+    let entries=loadData();
+    const fc=document.getElementById('filter-customer').value;
+    const ft=document.getElementById('filter-type').value;
+    const ff=document.getElementById('filter-from').value;
+    const ft2=document.getElementById('filter-to').value;
+    if (fc)  entries=entries.filter(e=>e.customer===fc);
+    if (ft)  entries=entries.filter(e=>e.type===ft);
+    if (ff)  entries=entries.filter(e=>e.date>=ff);
+    if (ft2) entries=entries.filter(e=>e.date<=ft2);
     return entries;
 }
-
 function renderDashboard() {
-    const entries  = getFilteredEntries();
-    const monthStr = new Date().toISOString().slice(0, 7);
-    const monthE   = entries.filter(e => e.date.startsWith(monthStr));
-    document.getElementById('stat-hours').textContent     = monthE.reduce((s,e)=>s+e.hours,0).toFixed(1) + 'h';
-    document.getElementById('stat-entries').textContent   = monthE.length;
-    document.getElementById('stat-customers').textContent = new Set(monthE.map(e=>e.customer)).size;
-
-    const byCustomer = {};
-    entries.forEach(e => {
-        if (!byCustomer[e.customer]) byCustomer[e.customer] = { count:0, hours:0, ma:0, sub:0 };
-        byCustomer[e.customer].count++;
-        byCustomer[e.customer].hours += e.hours;
-        if (e.type === 'Mitarbeiter') byCustomer[e.customer].ma  += e.hours;
-        else                          byCustomer[e.customer].sub += e.hours;
-    });
-    const sorted = Object.entries(byCustomer).sort((a,b)=>b[1].hours-a[1].hours);
-    const sumTb  = document.getElementById('summary-tbody');
-    if (sorted.length === 0) {
-        sumTb.innerHTML = '<tr><td colspan="5" class="no-data">Keine Daten für diesen Filter</td></tr>';
-    } else {
-        const totalAll = sorted.reduce((s,[,d])=>s+d.hours,0);
-        sumTb.innerHTML = sorted.map(([cust,d]) => `
-            <tr>
-                <td>${cust}</td><td>${d.count}</td>
-                <td class="hours-bold">${d.hours.toFixed(1)} Std.</td>
-                <td>${d.ma.toFixed(1)}</td><td>${d.sub.toFixed(1)}</td>
-            </tr>`).join('') + `
-            <tr class="totals-row">
-                <td>Gesamt</td><td>${entries.length}</td>
-                <td>${totalAll.toFixed(1)} Std.</td>
-                <td>${entries.filter(e=>e.type==='Mitarbeiter').reduce((s,e)=>s+e.hours,0).toFixed(1)}</td>
-                <td>${entries.filter(e=>e.type==='Subunternehmer').reduce((s,e)=>s+e.hours,0).toFixed(1)}</td>
-            </tr>`;
+    const all=loadData(), entries=getFilteredEntries();
+    const now=new Date();
+    const thisStr=now.toISOString().slice(0,7);
+    const lastDate=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const lastStr=lastDate.toISOString().slice(0,7);
+    const thisE=all.filter(e=>e.date.startsWith(thisStr));
+    const lastE=all.filter(e=>e.date.startsWith(lastStr));
+    document.getElementById('stat-hours').textContent      =thisE.reduce((s,e)=>s+e.hours,0).toFixed(1)+'h';
+    document.getElementById('stat-hours-last').textContent =lastE.reduce((s,e)=>s+e.hours,0).toFixed(1)+'h';
+    document.getElementById('stat-entries').textContent    =thisE.length;
+    document.getElementById('stat-customers').textContent  =new Set(thisE.map(e=>e.customer)).size;
+    document.getElementById('stat-label-this').textContent =`Std. ${MONTHS_DE[now.getMonth()]}`;
+    document.getElementById('stat-label-last').textContent =`Std. ${MONTHS_DE[lastDate.getMonth()]}`;
+    // Stunden pro Kunde
+    const byC={};
+    entries.forEach(e=>{ if(!byC[e.customer])byC[e.customer]={count:0,hours:0,ma:0,sub:0}; byC[e.customer].count++; byC[e.customer].hours+=e.hours; if(e.type==='Mitarbeiter')byC[e.customer].ma+=e.hours; else byC[e.customer].sub+=e.hours; });
+    const sorted=Object.entries(byC).sort((a,b)=>b[1].hours-a[1].hours);
+    const sumTb=document.getElementById('summary-tbody');
+    if (!sorted.length){ sumTb.innerHTML='<tr><td colspan="6" class="no-data">Keine Daten</td></tr>'; }
+    else {
+        const tot=sorted.reduce((s,[,d])=>s+d.hours,0);
+        sumTb.innerHTML=sorted.map(([cust,d])=>`<tr><td>${esc(cust)}</td><td style="font-size:12px;color:#718096">${esc(getCustomerAddress(cust))||'—'}</td><td>${d.count}</td><td class="hours-bold">${d.hours.toFixed(1)}</td><td>${d.ma.toFixed(1)}</td><td>${d.sub.toFixed(1)}</td></tr>`).join('')
+            +`<tr class="totals-row"><td>Gesamt</td><td></td><td>${entries.length}</td><td>${tot.toFixed(1)}</td><td>${entries.filter(e=>e.type==='Mitarbeiter').reduce((s,e)=>s+e.hours,0).toFixed(1)}</td><td>${entries.filter(e=>e.type==='Subunternehmer').reduce((s,e)=>s+e.hours,0).toFixed(1)}</td></tr>`;
     }
-
-    const sorted2 = [...entries].sort((a,b)=>b.date.localeCompare(a.date)||b.from.localeCompare(a.from));
-    document.getElementById('entry-count').textContent = `${entries.length} Einträge`;
-    const tbody = document.getElementById('entries-tbody');
-    if (sorted2.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="no-data">Keine Einträge gefunden</td></tr>';
-    } else {
-        tbody.innerHTML = sorted2.map(e => `
-            <tr>
-                <td class="cell-nowrap">${fmtDate(e.date)}</td>
-                <td class="cell-truncate" title="${e.name}">${e.name}</td>
-                <td class="cell-nowrap"><span class="badge badge-${e.type==='Mitarbeiter'?'ma':'sub'}">${e.type==='Mitarbeiter'?'MA':'Sub'}</span></td>
-                <td class="cell-truncate" title="${e.customer}">${e.customer}</td>
-                <td class="cell-nowrap">${e.from}</td><td class="cell-nowrap">${e.to}</td>
-                <td class="hours-bold cell-nowrap">${e.hours.toFixed(1)}</td>
-                <td class="note-text cell-truncate" title="${e.note||''}">${e.note||'—'}</td>
-                <td style="text-align:center;white-space:nowrap">
-                    <button class="btn-rapport-sm" onclick="showRapport(${e.id})">📋</button>
-                    <button class="btn-danger-sm" onclick="deleteEntry(${e.id})">✕</button>
-                </td>
-            </tr>`).join('');
-    }
+    const sorted2=[...entries].sort((a,b)=>b.date.localeCompare(a.date)||b.from.localeCompare(a.from));
+    document.getElementById('entry-count').textContent=`${entries.length} Einträge`;
+    const tbody=document.getElementById('entries-tbody');
+    if (!sorted2.length){ tbody.innerHTML='<tr><td colspan="9" class="no-data">Keine Einträge</td></tr>'; }
+    else tbody.innerHTML=sorted2.map(e=>{
+        const signed=(e.sigCustomer||e.sigEmployee)?' <span class="badge-signed" title="Unterschrieben">✓</span>':'';
+        return `<tr>
+            <td class="cell-nowrap">${fmtDate(e.date)}</td>
+            <td class="cell-truncate" title="${esc(e.name)}">${esc(e.name)}</td>
+            <td><span class="badge badge-${e.type==='Mitarbeiter'?'ma':'sub'}">${e.type==='Mitarbeiter'?'MA':'Sub'}</span></td>
+            <td class="cell-truncate" title="${esc(e.customer)}">${esc(e.customer)}${signed}</td>
+            <td class="cell-nowrap">${esc(e.from)}</td><td class="cell-nowrap">${esc(e.to)}</td>
+            <td class="hours-bold">${e.hours.toFixed(1)}</td>
+            <td class="note-text cell-truncate" title="${esc(e.note||'')}">${esc(e.note||'—')}</td>
+            <td style="text-align:center;white-space:nowrap">
+                <button class="btn-rapport-sm" onclick="showRapport(${e.id})">📋</button>
+                <button class="btn-danger-sm" onclick="deleteEntry(${e.id})">✕</button>
+            </td></tr>`;
+    }).join('');
+    renderSignedRapports();
 }
-
 async function refreshDashboard() {
+    const btn=document.getElementById('refresh-btn');
+    const status=document.getElementById('refresh-status');
+    if (btn) { btn.disabled=true; btn.textContent='↻ Lädt…'; }
+    let ok=false;
     try {
-        const res = await fetch('/api/data');
-        if (res.ok) APP_DATA = await res.json();
+        const r=await fetch('/api/data');
+        if (r.ok) {
+            APP_DATA=await r.json();
+            if (APP_DATA.customers) APP_DATA.customers=normalizeCustomers(APP_DATA.customers);
+            ok=true;
+        }
     } catch(e) {}
-    populateCustomerFilter();
-    populateMonthFilter();
-    renderDashboard();
-}
-
-function deleteEntry(id) {
-    if (!confirm('Diesen Eintrag löschen?')) return;
-    saveData(loadData().filter(e => e.id !== id));
-    renderDashboard();
-}
-
-function resetFilters() {
-    ['filter-customer','filter-month','filter-type','filter-from','filter-to'].forEach(id => document.getElementById(id).value = '');
-    renderDashboard();
-}
-
-function onMonthChange() {
-    const val = document.getElementById('filter-month').value;
-    if (val) {
-        const [y, m] = val.split('-');
-        const last   = new Date(parseInt(y), parseInt(m), 0).getDate();
-        document.getElementById('filter-from').value = `${y}-${m}-01`;
-        document.getElementById('filter-to').value   = `${y}-${m}-${String(last).padStart(2,'0')}`;
-    } else {
-        document.getElementById('filter-from').value = '';
-        document.getElementById('filter-to').value   = '';
+    if (btn) { btn.disabled=false; btn.textContent='↻ Aktualisieren'; }
+    if (status) {
+        const now=new Date();
+        const t=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        status.style.display='inline';
+        if (ok) { status.style.color='var(--green)'; status.textContent=`✓ Aktualisiert ${t} Uhr`; }
+        else     { status.style.color='var(--red)';   status.textContent=`✕ Keine Verbindung (${t})`; }
+        clearTimeout(status._timer);
+        status._timer=setTimeout(()=>status.style.display='none', 4000);
     }
+    populateCustomerFilter(); populateMonthFilter(); renderDashboard();
+}
+function deleteEntry(id){ if(!confirm('Eintrag löschen?'))return; saveData(loadData().filter(e=>e.id!==id)); renderDashboard(); }
+function resetFilters(){ ['filter-customer','filter-month','filter-type','filter-from','filter-to'].forEach(id=>document.getElementById(id).value=''); renderDashboard(); }
+function onMonthChange() {
+    const val=document.getElementById('filter-month').value;
+    if (val){ const [y,m]=val.split('-'); const last=new Date(+y,+m,0).getDate(); document.getElementById('filter-from').value=`${y}-${m}-01`; document.getElementById('filter-to').value=`${y}-${m}-${String(last).padStart(2,'0')}`; }
+    else { document.getElementById('filter-from').value=''; document.getElementById('filter-to').value=''; }
     renderDashboard();
 }
-
-function onDateChange() {
-    document.getElementById('filter-month').value = '';
-    renderDashboard();
-}
-
-const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-
+function onDateChange(){ document.getElementById('filter-month').value=''; renderDashboard(); }
 function populateCustomerFilter() {
-    const sel = document.getElementById('filter-customer');
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">Alle Kunden</option>';
-    const inList = loadCustomers();
-    const inData = [...new Set(loadData().map(e => e.customer))];
-    const all    = [...new Set([...inList, ...inData])].sort((a,b)=>a.localeCompare(b,'de'));
-    all.forEach(c => {
-        const o = document.createElement('option');
-        o.value = c; o.textContent = c;
-        sel.appendChild(o);
-    });
-    if (cur) sel.value = cur;
+    const sel=document.getElementById('filter-customer'), cur=sel.value;
+    sel.innerHTML='<option value="">Alle Kunden</option>';
+    const all=[...new Set([...loadCustomers().map(c=>c.name),...loadData().map(e=>e.customer)])].sort((a,b)=>a.localeCompare(b,'de'));
+    all.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+    if (cur) sel.value=cur;
 }
-
 function populateMonthFilter() {
-    const sel = document.getElementById('filter-month');
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">Alle Monate</option>';
-    [...new Set(loadData().map(e=>e.date.slice(0,7)))].sort().reverse().forEach(m => {
-        const [y,mo] = m.split('-');
-        const o = document.createElement('option');
-        o.value = m; o.textContent = `${MONTHS_DE[parseInt(mo)-1]} ${y}`;
-        sel.appendChild(o);
+    const sel=document.getElementById('filter-month'), cur=sel.value;
+    sel.innerHTML='<option value="">Alle Monate</option>';
+    [...new Set(loadData().map(e=>e.date.slice(0,7)))].sort().reverse().forEach(m=>{
+        const [y,mo]=m.split('-'); const o=document.createElement('option');
+        o.value=m; o.textContent=`${MONTHS_DE[+mo-1]} ${y}`; sel.appendChild(o);
     });
-    if (cur) sel.value = cur;
+    if (cur) sel.value=cur;
 }
-
 function exportCSV() {
-    const entries = getFilteredEntries().sort((a,b)=>b.date.localeCompare(a.date));
-    const rows = [
-        ['Datum','Name','Typ','Kunde','Von','Bis','Stunden','Bemerkung'],
-        ...entries.map(e=>[e.date,e.name,e.type,e.customer,e.from,e.to,e.hours.toFixed(2).replace('.',','),e.note||''])
-    ];
-    const csv  = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\r\n');
-    const blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = `zeiterfassung_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
+    const rows=[['Datum','Name','Typ','Kunde','Anschrift','Von','Bis','Stunden','Bemerkung','Kunden-Unt.','MA-Unt.'],
+        ...getFilteredEntries().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>[
+            e.date,e.name,e.type,e.customer,getCustomerAddress(e.customer),
+            e.from,e.to,e.hours.toFixed(2).replace('.',','),e.note||'',
+            e.sigCustomer?'Ja':'Nein',e.sigEmployee?'Ja':'Nein'
+        ])];
+    const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
+    a.download=`zeiterfassung_${new Date().toISOString().slice(0,10)}.csv`; a.click();
 }
 
-function fmtDate(s) {
-    const [y,m,d] = s.split('-');
-    return `${d}.${m}.${y}`;
-}
-
-// ── TABS ──────────────────────────────────────────────────
-
+/* ────────────────────────────────────────────────
+   TABS & INIT
+──────────────────────────────────────────────── */
 function showTab(tab, btn) {
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.getElementById('view-'+tab).classList.add('active');
-    btn.classList.add('active');
-    if (tab === 'dashboard') { populateCustomerFilter(); populateMonthFilter(); renderDashboard(); }
-    if (tab === 'form')      { populateFormCustomers(); }
+    document.getElementById('view-'+tab).classList.add('active'); btn.classList.add('active');
+    if (tab==='dashboard'){ populateCustomerFilter(); populateMonthFilter(); renderDashboard(); }
+    if (tab==='form')     { populateFormCustomers(); }
 }
-
-// ── INIT ──────────────────────────────────────────────────
-
 function initUI() {
-    document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
-    initSigCanvas();
-
-    const isBuero = window.location.search.includes('buero');
+    document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+    buildTimeSelects(); initSigCanvas();
+    const isBuero=window.location.search.includes('buero');
     if (isBuero) {
-        document.getElementById('tab-nav').style.display   = 'none';
+        document.getElementById('tab-nav').style.display='none';
         document.getElementById('view-form').classList.remove('active');
         document.getElementById('view-dashboard').classList.add('active');
-        document.getElementById('header-sub').textContent  = 'Büro-Übersicht';
+        document.getElementById('header-sub').textContent='Büro-Übersicht';
         populateCustomerFilter(); populateMonthFilter(); renderDashboard();
-
-        // Live-Aktualisierung alle 20 Sekunden
-        setInterval(async () => {
-            try {
-                const res = await fetch('/api/data');
-                if (res.ok) APP_DATA = await res.json();
-                renderDashboard();
-            } catch(e) {}
-        }, 20000);
+        setInterval(async()=>{
+            try{ const r=await fetch('/api/data'); if(r.ok){ APP_DATA=await r.json(); if(APP_DATA.customers)APP_DATA.customers=normalizeCustomers(APP_DATA.customers); } renderDashboard(); }catch(e){}
+        },20000);
     } else {
-        document.getElementById('tab-nav').style.display = 'none';
-        document.getElementById('header-sub').textContent = 'Zeiterfassung Mitarbeiter';
+        document.getElementById('tab-nav').style.display='none';
+        document.getElementById('header-sub').textContent='Zeiterfassung Mitarbeiter';
         populateFormCustomers();
     }
 }
-
 initData();
 </script>
 </body>
